@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Mappa di battaglia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#141a18; --panel:#1d2522; --panel2:#26302c; --line:#34413c; --ink:#e6ece8; --muted:#9caba4;
+  --accent:#4fc3a1; --accent-ink:#06231a; --copper:#e08a52; --danger:#ef7d72; --warn:#e6a94a;
+  --floor:#cfc6b2; --floor2:#c4bba6; --wall:#2b2622; --diff:#8a9a6a; --obst:#8b6a44; --ledge:#b7aa8e; --door:#7a5230;
+  --f:"Alegreya Sans","Segoe UI",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;overscroll-behavior:none}
+body{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+button,input,select{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:42px;cursor:pointer;font-weight:700}
+button:hover{border-color:var(--accent)}
+button.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.on{background:var(--accent);color:var(--accent-ink)}
+button.dng{border-color:var(--danger);color:var(--danger)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:42px}
+input[type=color]{padding:2px;width:48px}
+input[type=number]{width:80px;font-family:var(--mono)}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px max(12px,env(safe-area-inset-left,0px)) 8px max(12px,env(safe-area-inset-right,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+.top h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.02em}
+.top .code{font-family:var(--mono);background:var(--panel2);padding:4px 10px;border-radius:6px;letter-spacing:.12em}
+.top .st{font-size:13px;color:var(--muted)}
+.top .sp{flex:1}
+.main{flex:1;display:flex;min-height:0}
+.stage{flex:1;position:relative;min-width:0;touch-action:none}
+canvas{display:block;width:100%;height:100%}
+.side{width:320px;max-width:42vw;background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:12px;display:flex;flex-direction:column;gap:12px}
+.side h3{margin:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tok{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);cursor:pointer}
+.tok.sel{border-color:var(--accent)}
+.tok.cur{box-shadow:inset 4px 0 0 var(--copper)}
+.tok .dot{width:14px;height:14px;border-radius:50%;flex:none}
+.tok b{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tok small{color:var(--muted);font-size:12px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px max(12px,env(safe-area-inset-left,0px)) 8px max(12px,env(safe-area-inset-right,0px));background:var(--panel);border-top:1px solid var(--line)}
+.bar .info{flex:1;min-width:160px;font-size:15px}
+.note{font-size:13px;color:var(--muted)}
+.screen{flex:1;overflow:auto;padding:20px max(16px,env(safe-area-inset-left,0px)) 40px max(16px,env(safe-area-inset-right,0px))}
+.screen .box{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card h2{margin:0;font-size:20px}
+.pcrow{display:grid;grid-template-columns:48px minmax(0,1fr) 80px 80px 42px;gap:6px;align-items:center}
+.pcrow.h{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.err{color:var(--danger);font-size:14px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal .card{max-width:420px;width:100%;align-items:center;text-align:center}
+#qr{background:#fff;padding:12px;border-radius:8px}
+#qr img,#qr canvas{display:block}
+.toast{position:fixed;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.legend{display:grid;grid-template-columns:20px 1fr;gap:4px 8px;font-size:13px;align-items:center}
+.legend i{width:18px;height:18px;border-radius:3px;display:block;border:1px solid rgba(0,0,0,.3)}
+@media (max-width:760px){.side{position:absolute;right:0;top:0;bottom:0;z-index:10;max-width:86vw;box-shadow:-10px 0 30px rgba(0,0,0,.4)}.side.closed{display:none}}
+@media (min-width:761px){#sideToggle{display:none}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1 id="title">Mappa di battaglia</h1>
+  <span class="code" id="roomCode" hidden></span>
+  <span class="st" id="netStatus"></span>
+  <span class="sp"></span>
+  <button id="sideToggle" hidden>Pannello</button>
+</div>
+
+<!-- SCHERMATE -->
+<div class="screen" id="scrHome" hidden>
+  <div class="box">
+    <div class="card">
+      <h2>Entra in una battaglia</h2>
+      <p class="note">Il master ti mostra il codice della stanza o un QR.</p>
+      <div class="row"><input id="joinCode" placeholder="Codice stanza, es. RATTO-42" autocapitalize="characters" style="flex:1;min-width:200px"><button class="pri" id="joinGo">Entra</button></div>
+      <div class="err" id="joinErr"></div>
+    </div>
+    <div class="card">
+      <h2>Sei il master?</h2>
+      <p class="note">Apri la battaglia dal pulsante «Apri sulla mappa» dello schermo del master, oppure creane una qui.</p>
+      <div class="row"><button id="newMaster">Crea una battaglia</button><button id="resumeMaster" hidden>Riprendi l'ultima battaglia</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="scrSetup" hidden>
+  <div class="box">
+    <div class="card">
+      <h2 id="setupTitle">Prepara la battaglia</h2>
+      <label class="note" for="setMap">Mappa</label>
+      <select id="setMap"></select>
+      <div class="note" id="setMapNote"></div>
+    </div>
+    <div class="card">
+      <h2>Personaggi del gruppo</h2>
+      <p class="note">Velocità e scurovisione in metri. I giocatori li scelgono dal telefono; chi non è in lista può registrarsi.</p>
+      <div class="pcrow h"><span>Colore</span><span>Nome</span><span>Vel.</span><span>Scuro.</span><span></span></div>
+      <div id="setPcs" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div class="row"><button id="addPc">+ Personaggio</button></div>
+    </div>
+    <div class="card">
+      <h2>Nemici e PNG</h2>
+      <p class="note">Partono nascosti nella nebbia: li scopri tu quando vuoi.</p>
+      <div id="setEnemies" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div class="row"><input id="newEnName" placeholder="Nome" style="flex:1;min-width:140px"><input id="newEnN" type="number" min="1" value="1" aria-label="Quantità"><button id="addEn">+ Aggiungi</button></div>
+    </div>
+    <div class="row"><button class="pri" id="createRoom">Crea la stanza</button><span class="err" id="setupErr"></span></div>
+  </div>
+</div>
+
+<div class="screen" id="scrJoin" hidden>
+  <div class="box">
+    <div class="card">
+      <h2>Chi sei?</h2>
+      <div id="joinPcs" style="display:flex;flex-direction:column;gap:6px"></div>
+      <p class="note" id="joinWait">Collegamento alla stanza…</p>
+    </div>
+    <div class="card">
+      <h2>Nuovo personaggio</h2>
+      <div class="row"><input id="jnName" placeholder="Nome" style="flex:1;min-width:160px"><input id="jnColor" type="color" value="#4fc3a1" aria-label="Colore"></div>
+      <div class="row"><label class="note" for="jnSpeed">Velocità (m)</label><input id="jnSpeed" type="number" value="9" step="1.5" min="0"><label class="note" for="jnDv">Scurovisione (m)</label><input id="jnDv" type="number" value="0" step="3" min="0"></div>
+      <div class="row"><button class="pri" id="jnGo">Entra con questo personaggio</button><span class="err" id="jnErr"></span></div>
+    </div>
+    <div class="card"><button id="asTable">Usa questo dispositivo come vista tavolo (TV o tablet)</button></div>
+  </div>
+</div>
+
+<div class="main" id="scrMap" hidden>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+  <aside class="side" id="side"></aside>
+</div>
+<div class="bar" id="bar" hidden></div>
+
+<div class="modal" id="qrModal" hidden><div class="card"><h2>Entrate dal telefono</h2><div id="qr"></div><div class="code" id="qrCode" style="font-size:24px"></div><div class="note" id="qrUrl" style="word-break:break-all"></div><button id="qrClose">Chiudi</button></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+"use strict";
+/* ================= MAPPE =================
+   # muro · . pavimento · ~ terreno difficile · c carretto (blocca il passo, non la vista)
+   b barile (blocca il passo) · h sporgenza · D porta chiusa · d porta aperta
+   P partenza PG · E partenza nemici */
+const MAPS={
+ n6:{name:"Nodo 6 · La galleria dei portatori",light:"luce",note:"Galleria illuminata da torce. Il carretto dà mezza copertura; i fiondatori stanno sulla sporgenza a nord-est. Con l'allarme della campana i nemici partono pronti.",rows:[
+ "##############################",
+ "#########.........############",
+ "####.........bb........hhhh###",
+ "PP.......................hhhh##",
+ "PP.......####.....cc.....EEhh.",
+ "PP.......####.....cc....EEEE..",
+ "PP.......####.....cc....EEEE..",
+ "PP....................EEEE....",
+ "####........~~~~.......EE.....",
+ "#####......~~~~~~.......b..###",
+ "#######.....~~~~.........#####",
+ "#########............b.#######",
+ "##############################"]},
+ vuota:{name:"Stanza vuota 20×14",light:"luce",note:"Per battaglie improvvisate.",rows:(()=>{const r=[];for(let y=0;y<14;y++){let s="";for(let x=0;x<20;x++){const edge=y===0||y===13||x===0||x===19;s+=edge?"#":(x<=2&&y>=5&&y<=8?"P":(x>=16&&y>=5&&y<=8?"E":"."))}r.push(s)}return r})()}
+};
+const DEFAULT_PCS=[
+ {name:"Ixtar-Gor",color:"#4f8a5a",speed:9,dv:0},
+ {name:"Draeven Kross",color:"#6e96e6",speed:9,dv:36},
+ {name:"Leonis Caliban",color:"#c9a35a",speed:7.5,dv:36}
+];
+const ENEMY_COLOR="#b5302a", ALLY_COLOR="#56c4a8";
+const PEER_PREFIX="mappa-battaglia-";
+
+/* ================= UTIL ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),2200)}
+function b64d(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return decodeURIComponent(escape(atob(s)))}
+function roomCode(){const w=["RATTO","LAMA","TORRE","LUNA","FOGNA","ZANNA","RAME","CODA","GILDA","OMBRA"];return w[Math.floor(Math.random()*w.length)]+"-"+(10+Math.floor(Math.random()*90))}
+function show(id){["#scrHome","#scrSetup","#scrJoin","#scrMap"].forEach(s=>$(s).hidden=s!==id);$("#bar").hidden=id!=="#scrMap"}
+const isCell=(g,x,y)=>y>=0&&y<g.length&&x>=0&&x<g[0].length;
+const ch=(g,x,y)=>isCell(g,x,y)?g[y][x]:"#";
+const blocksSight=c=>c==="#"||c==="D";
+const blocksMove=c=>c==="#"||c==="D"||c==="c"||c==="b";
+const isDiff=c=>c==="~";
+const M=1.5;
+
+/* ================= STATO ================= */
+let ROLE=null;      // master | player | table
+let S=null;         // stato completo (master) o pubblico (altri)
+let ME=null;        // id del token del giocatore
+let SEL=null;       // token selezionato
+let PEER=null, CONNS=new Map(), CONN=null, BC=null;
+let VIEW={scale:1,ox:0,oy:0,fitted:false,follow:true};
+let EDIT=null;      // strumento master: null | "door" | "fog"
+
+function newState(cfg){
+ const m=MAPS[cfg.map]||MAPS.vuota;
+ const g=m.rows.map(r=>r.padEnd(m.rows[0].length,"#"));
+ const st={v:1,room:cfg.room,title:cfg.title||m.name,mapId:cfg.map,light:m.light,grid:g,tokens:[],turn:null,free:true,revealAll:false,explored:{},seq:0};
+ const spP=[],spE=[];g.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==="P")spP.push([x,y]);if(c==="E")spE.push([x,y])}));
+ let i=0;(cfg.pcs||[]).forEach(p=>{const s=spP[i++%Math.max(1,spP.length)]||[1,1];st.tokens.push(mkTok("pc",p,s))});
+ let j=0;(cfg.enemies||[]).forEach(e=>{for(let k=1;k<=(e.n||1);k++){const s=e.reserve?[-1,-1]:(spE[j++%Math.max(1,spE.length)]||[g[0].length-2,1]);const t=mkTok(e.ally?"ally":"enemy",{name:(e.n>1?e.name+" "+k:e.name),color:e.ally?ALLY_COLOR:ENEMY_COLOR,speed:e.speed||9,dv:e.dv||18},s,!e.ally);if(e.reserve)t.reserve=true;st.tokens.push(t)}});
+ return st;
+}
+let UID=1;
+function mkTok(kind,p,[x,y],hidden){return{id:"t"+(Date.now().toString(36))+(UID++),kind,name:p.name,color:p.color||"#888",speed:+p.speed||9,dv:+p.dv||0,x,y,hidden:!!hidden,used:0,dash:false,owner:null}}
+const tokAt=(x,y,exceptId)=>S.tokens.find(t=>!t.reserve&&t.x===x&&t.y===y&&t.id!==exceptId);
+const tok=id=>S&&S.tokens.find(t=>t.id===id);
+
+/* ================= VISIONE ================= */
+function rangeOf(t){if(S.light==="luce")return 999;return Math.max(t.dv,t.torch?6:0)/M}
+function losFrom(t){
+ const g=S.grid,vis=new Set(),R=rangeOf(t),H=g.length,W=g[0].length;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+  const dx=x-t.x,dy=y-t.y;if(Math.max(Math.abs(dx),Math.abs(dy))>R)continue;
+  if(lineClear(t.x,t.y,x,y))vis.add(y*W+x);
+ }
+ return vis;
+}
+function lineClear(x0,y0,x1,y1){
+ const g=S.grid,n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))*2;
+ for(let i=1;i<n;i++){const fx=x0+(x1-x0)*i/n,fy=y0+(y1-y0)*i/n;const cx=Math.round(fx),cy=Math.round(fy);if(cx===x1&&cy===y1)break;if(blocksSight(ch(g,cx,cy)))return false}
+ return true;
+}
+function visibleFor(ids){const set=new Set();ids.forEach(id=>{const t=tok(id);if(t&&!t.down)losFrom(t).forEach(i=>set.add(i))});return set}
+function partyIds(){return S.tokens.filter(t=>t.kind==="pc"||t.kind==="ally").map(t=>t.id)}
+function updateExplored(){if(ROLE!=="master")return;const W=S.grid[0].length;S.tokens.filter(t=>t.kind!=="enemy").forEach(t=>{const e=S.explored[t.id]||(S.explored[t.id]=[]);const set=new Set(e);losFrom(t).forEach(i=>set.add(i));S.explored[t.id]=[...set]})}
+
+/* ================= MOVIMENTO ================= */
+function budget(t){if(S.free&&t.kind!=="enemy")return 999;return Math.floor((t.speed/M)*(t.dash?2:1))-t.used}
+function reach(t,limit){
+ const g=S.grid,W=g[0].length,dist=new Map(),start=t.y*W+t.x;dist.set(start,0);
+ const q=[[t.x,t.y,0]];const lim=limit==null?budget(t):limit;
+ while(q.length){q.sort((a,b)=>a[2]-b[2]);const[x,y,d]=q.shift();
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=x+dx,ny=y+dy;const c=ch(g,nx,ny);if(blocksMove(c))continue;
+   if(dx&&dy&&blocksMove(ch(g,x+dx,y))&&blocksMove(ch(g,x,y+dy)))continue;
+   const o=tokAt(nx,ny,t.id);if(o&&!o.down&&o.kind==="enemy"!==(t.kind==="enemy")&&!o.hidden)continue;
+   const nd=d+(isDiff(c)?2:1);if(nd>lim)continue;const k=ny*W+nx;if(dist.has(k)&&dist.get(k)<=nd)continue;dist.set(k,nd);q.push([nx,ny,nd])}}
+ return dist;
+}
+function canEnd(t,x,y){const o=tokAt(x,y,t.id);return !o||o.down}
+function applyMove(id,x,y,byMaster){
+ const t=tok(id);if(!t)return"Segnalino sconosciuto";
+ if(byMaster){if(blocksMove(ch(S.grid,x,y)))return"Lì c'è un ostacolo";if(!canEnd(t,x,y))return"Casella occupata";t.x=x;t.y=y;return null}
+ if(!S.free&&S.turn!==id)return"Non è il tuo turno";
+ const W=S.grid[0].length,d=reach(t).get(y*W+x);if(d==null)return"Troppo lontano";if(!canEnd(t,x,y))return"Qualcosa ti impedisce di entrare lì";
+ if(!(S.free&&t.kind!=="enemy"))t.used+=d;t.x=x;t.y=y;return null;
+}
+
+/* ================= RETE ================= */
+function setNet(t){$("#netStatus").textContent=t}
+function publicStateFor(role,meId){
+ const s=JSON.parse(JSON.stringify(S));
+ if(role!=="master"){s.tokens=s.tokens.filter(t=>!t.reserve&&(t.kind!=="enemy"||!t.hidden));delete s.cfg}
+ return s;
+}
+function broadcast(){
+ if(ROLE!=="master")return;S.seq++;ls.set("mb-master",S);
+ CONNS.forEach((c,conn)=>{try{conn.open&&conn.send({t:"state",s:publicStateFor(c.role,c.id),you:c.id})}catch(e){}});
+ if(BC)try{BC.postMessage({t:"state",s:publicStateFor("table")})}catch(e){}
+}
+function startMaster(st){
+ ROLE="master";S=st;ls.set("mb-master",S);show("#scrMap");setupStage();renderSide();renderBar();
+ $("#roomCode").hidden=false;$("#roomCode").textContent=S.room;$("#title").textContent=S.title;
+ try{BC=new BroadcastChannel(PEER_PREFIX+S.room);BC.onmessage=e=>{if(e.data&&e.data.t==="hello")broadcast()}}catch(e){}
+ try{const MB=new BroadcastChannel(PEER_PREFIX+"master");MB.onmessage=e=>{const m=e.data||{};if(m.t==="ping")MB.postMessage({t:"pong",room:S.room,title:S.title});if(m.t==="merge"&&m.room===S.room){const n=mergeEnemies(m.enemies);MB.postMessage({t:"merged",n});toast(n?n+" nemici aggiunti in riserva":"Nessun nemico nuovo da aggiungere")}}}catch(e){}
+ updateExplored();draw();
+ if(typeof Peer==="undefined"){setNet("Offline: solo questo dispositivo e la vista tavolo locale");return}
+ const open=()=>{PEER=new Peer(PEER_PREFIX+S.room,{debug:1});
+  PEER.on("open",()=>setNet("Stanza aperta: i telefoni possono entrare"));
+  PEER.on("error",e=>{if(e.type==="unavailable-id"){setNet("Riapro la stanza…");try{PEER.destroy()}catch(x){}setTimeout(open,4000)}else if(e.type==="network"||e.type==="server-error"||e.type==="socket-error"){setNet("Senza internet: telefoni non disponibili")}else setNet("Errore di rete: "+e.type)});
+  PEER.on("disconnected",()=>{setNet("Riconnessione…");setTimeout(()=>{try{PEER.reconnect()}catch(x){}},2000)});
+  PEER.on("connection",conn=>{CONNS.set(conn,{role:"player",id:null});conn.on("data",m=>onMasterMsg(conn,m));conn.on("close",()=>{CONNS.delete(conn);renderSide()});conn.on("open",()=>conn.send({t:"lobby",s:publicStateFor("player")}))})};
+ open();
+}
+function onMasterMsg(conn,m){
+ const c=CONNS.get(conn);if(!c||!m)return;
+ if(m.t==="table"){c.role="table";broadcast();return}
+ if(m.t==="claim"){const t=tok(m.id);if(!t||t.kind!=="pc"){conn.send({t:"err",msg:"Personaggio non trovato"});return}t.owner=m.name||t.name;c.id=t.id;c.role="player";broadcast();renderSide();toast((m.name||t.name)+" è entrato");return}
+ if(m.t==="new"){const p=m.pc||{};const name=String(p.name||"").slice(0,30).trim();if(!name){conn.send({t:"err",msg:"Serve un nome"});return}
+  let t=S.tokens.find(x=>x.kind==="pc"&&x.name.toLowerCase()===name.toLowerCase());
+  if(!t){const sp=freeSpawn("P");t=mkTok("pc",{name,color:p.color,speed:p.speed,dv:p.dv},sp);S.tokens.push(t)}
+  t.owner=name;c.id=t.id;c.role="player";updateExplored();broadcast();renderSide();draw();toast(name+" è entrato");return}
+ if(m.t==="move"){if(c.id!==m.id){conn.send({t:"err",msg:"Puoi muovere solo il tuo personaggio"});return}const err=applyMove(m.id,m.x,m.y,false);if(err){conn.send({t:"err",msg:err});conn.send({t:"state",s:publicStateFor(c.role),you:c.id});return}updateExplored();broadcast();draw();renderSide();renderBar();return}
+ if(m.t==="dash"){if(c.id!==m.id)return;const t=tok(m.id);if(t&&(S.free||S.turn===t.id)){t.dash=!t.dash;broadcast()}return}
+ if(m.t==="hide"){if(c.id!==m.id)return;const t=tok(m.id);if(t){t.hidden=!t.hidden;broadcast();renderSide();draw();toast(t.name+(t.hidden?" si nasconde":" esce allo scoperto"))}return}
+ if(m.t==="endturn"){if(c.id===S.turn){nextTurn();}return}
+}
+function mergeEnemies(list){let added=0;(list||[]).forEach(e=>{const base=e.name;const have=S.tokens.filter(t=>t.name===base||t.name.replace(/\s\d+$/,"")===base).length;for(let k=have+1;k<=(e.n||1);k++){const t=mkTok(e.ally?"ally":"enemy",{name:(e.n>1?base+" "+k:base),color:e.ally?ALLY_COLOR:ENEMY_COLOR,speed:e.speed||9,dv:e.dv||18},[-1,-1],!e.ally);t.reserve=true;S.tokens.push(t);added++}});broadcast();renderSide();draw();return added}
+function freeSpawn(kind){const g=S.grid;for(let y=0;y<g.length;y++)for(let x=0;x<g[0].length;x++)if(g[y][x]===kind&&!tokAt(x,y))return[x,y];for(let y=1;y<g.length;y++)for(let x=1;x<g[0].length;x++)if(!blocksMove(g[y][x])&&!tokAt(x,y))return[x,y];return[1,1]}
+
+function startClient(room,asTable){
+ ROLE=asTable?"table":"player";show(asTable?"#scrMap":"#scrJoin");$("#roomCode").hidden=false;$("#roomCode").textContent=room;
+ const saved=ls.get("mb-player-"+room,null);
+ const onState=(s,you)=>{S=s;if(you)ME=you;if(ROLE==="player"&&ME&&$("#scrJoin").hidden===false)enterMap();if(!$("#scrMap").hidden){$("#title").textContent=S.title;draw();renderBar();renderSide()}if(ROLE==="player"&&!ME)renderJoin()};
+ try{BC=new BroadcastChannel(PEER_PREFIX+room);BC.onmessage=e=>{if(asTable&&e.data&&e.data.t==="state")onState(e.data.s)};if(asTable)BC.postMessage({t:"hello"})}catch(e){}
+ if(asTable){setupStage();renderSide();renderBar()}
+ if(typeof Peer==="undefined"){setNet(asTable?"Offline: vista tavolo locale":"Serve internet per entrare dal telefono");return}
+ setNet("Collegamento…");
+ const connect=()=>{PEER=new Peer({debug:1});
+  PEER.on("open",()=>{CONN=PEER.connect(PEER_PREFIX+room,{reliable:true});
+   CONN.on("open",()=>{setNet("Collegato");if(asTable)CONN.send({t:"table"});else if(saved){CONN.send(saved.id?{t:"claim",id:saved.id,name:saved.name}:{t:"new",pc:saved.pc})}});
+   CONN.on("data",m=>{if(!m)return;if(m.t==="lobby"){S=m.s;if(!asTable)renderJoin()}else if(m.t==="state")onState(m.s,m.you);else if(m.t==="err")toast(m.msg)});
+   CONN.on("close",()=>{setNet("Collegamento perso, riprovo…");setTimeout(connect,3000)})});
+  PEER.on("error",e=>{if(e.type==="peer-unavailable")setNet("Stanza non trovata: controlla il codice o chiedi al master se è aperta");else setNet("Errore di rete: "+e.type);if(e.type!=="peer-unavailable")setTimeout(()=>{try{PEER.destroy()}catch(x){}connect()},4000)})};
+ connect();
+}
+function send(m){if(CONN&&CONN.open)CONN.send(m);else toast("Non collegato al master")}
+
+/* ================= SCHERMATA JOIN ================= */
+function renderJoin(){
+ if(!S){return}$("#joinWait").textContent="Scegli il tuo personaggio:";
+ const pcs=S.tokens.filter(t=>t.kind==="pc");
+ $("#joinPcs").innerHTML=pcs.length?pcs.map(t=>`<button data-claim="${t.id}" style="display:flex;align-items:center;gap:10px;text-align:left"><span class="dot" style="width:16px;height:16px;border-radius:50%;background:${t.color}"></span><span style="flex:1">${esc(t.name)}</span><small class="note">${t.speed} m${t.owner?" · già preso":""}</small></button>`).join(""):'<p class="note">Il master non ha dichiarato personaggi: creane uno qui sotto.</p>';
+ document.querySelectorAll("[data-claim]").forEach(b=>b.onclick=()=>{const t=pcs.find(x=>x.id===b.dataset.claim);ls.set("mb-player-"+S.room,{id:t.id,name:t.name});send({t:"claim",id:t.id,name:t.name})});
+}
+$("#jnGo").onclick=()=>{const name=$("#jnName").value.trim();if(!name){$("#jnErr").textContent="Scrivi un nome.";return}$("#jnErr").textContent="";const pc={name,color:$("#jnColor").value,speed:+$("#jnSpeed").value||9,dv:+$("#jnDv").value||0};ls.set("mb-player-"+(S?S.room:""),{pc});send({t:"new",pc})};
+$("#jnName").oninput=()=>$("#jnErr").textContent="";
+$("#asTable").onclick=()=>{const room=$("#roomCode").textContent;try{CONN&&CONN.close();PEER&&PEER.destroy()}catch(e){}location.href=location.pathname+"?r="+encodeURIComponent(room)+"&v=tavolo"};
+function enterMap(){show("#scrMap");setupStage();renderSide();renderBar();draw()}
+
+/* ================= STAGE / DISEGNO ================= */
+const cv=$("#cv"),ctx=cv.getContext("2d");let DPR=1;
+function setupStage(){resize();if(!setupStage.done){addEventListener("resize",()=>{resize();draw()});bindPointer();setupStage.done=true}}
+function resize(){const r=$("#stage").getBoundingClientRect();DPR=window.devicePixelRatio||1;cv.width=Math.max(1,r.width*DPR);cv.height=Math.max(1,r.height*DPR);VIEW.fitted=false}
+function fit(){if(!S)return;const W=S.grid[0].length,H=S.grid.length;const cw=cv.width/DPR,chh=cv.height/DPR;VIEW.scale=Math.min(cw/W,chh/H);VIEW.ox=(cw-W*VIEW.scale)/2;VIEW.oy=(chh-H*VIEW.scale)/2;VIEW.fitted=true}
+function followActive(){if(!VIEW.follow||ROLE==="master")return;const id=ROLE==="player"?ME:S.turn;const t=tok(id);if(!t)return;const cw=cv.width/DPR,chh=cv.height/DPR;const minScale=Math.min(cw,chh)/10;if(VIEW.scale<minScale)VIEW.scale=minScale;const tx=(t.x+.5)*VIEW.scale,ty=(t.y+.5)*VIEW.scale;const W=S.grid[0].length*VIEW.scale,H=S.grid.length*VIEW.scale;VIEW.ox=W<cw?(cw-W)/2:Math.min(0,Math.max(cw-W,cw/2-tx));VIEW.oy=H<chh?(chh-H)/2:Math.min(0,Math.max(chh-H,chh/2-ty))}
+function viewerVision(){
+ if(ROLE==="master")return null;
+ const ids=ROLE==="player"&&ME?[ME]:partyIds();
+ const vis=visibleFor(ids);const exp=new Set();
+ (ROLE==="player"&&ME?[ME]:partyIds()).forEach(id=>(S.explored[id]||[]).forEach(i=>exp.add(i)));
+ vis.forEach(i=>exp.add(i));return{vis,exp};
+}
+const COL={"#":"#2b2622",".":"#cfc6b2","P":"#cfc6b2","E":"#cfc6b2","~":"#8a9a6a","c":"#8b6a44","b":"#8b6a44","h":"#b7aa8e","D":"#7a5230","d":"#cfc6b2"};
+function draw(){
+ if(!S||$("#scrMap").hidden)return;if(!VIEW.fitted)fit();if(ROLE!=="master")followActive();
+ const g=S.grid,W=g[0].length,H=g.length,s=VIEW.scale;
+ ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle="#0b0e0d";ctx.fillRect(0,0,cv.width,cv.height);
+ ctx.translate(VIEW.ox,VIEW.oy);
+ const vv=viewerVision();const fogOn=!S.revealAll;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=g[y][x];const i=y*W+x;
+  if(vv&&fogOn&&!vv.exp.has(i)){ctx.fillStyle="#000";ctx.fillRect(x*s,y*s,s+.5,s+.5);continue}
+  ctx.fillStyle=COL[c]||"#cfc6b2";if(c==="."||c==="P"||c==="E"||c==="d")ctx.fillStyle=(x+y)%2?"#cfc6b2":"#c7bea9";ctx.fillRect(x*s,y*s,s+.5,s+.5);
+  if(c==="~"){ctx.strokeStyle="rgba(40,60,30,.45)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x*s+s*.2,y*s+s*.55);ctx.quadraticCurveTo(x*s+s*.35,y*s+s*.4,x*s+s*.5,y*s+s*.55);ctx.quadraticCurveTo(x*s+s*.65,y*s+s*.7,x*s+s*.8,y*s+s*.55);ctx.stroke()}
+  if(c==="c"||c==="b"){ctx.fillStyle="rgba(0,0,0,.25)";ctx.fillRect(x*s+s*.15,y*s+s*.15,s*.7,s*.7)}
+  if(c==="D"){ctx.fillStyle="#d9b27a";ctx.fillRect(x*s+s*.4,y*s,s*.2,s)}
+  if(c==="d"){ctx.strokeStyle="#7a5230";ctx.lineWidth=2;ctx.strokeRect(x*s+2,y*s+2,s-4,s-4)}
+  if(ROLE==="master"&&(c==="P"||c==="E")){ctx.fillStyle=c==="P"?"rgba(79,195,161,.18)":"rgba(181,48,42,.15)";ctx.fillRect(x*s,y*s,s,s)}
+  if(vv&&fogOn&&!vv.vis.has(i)&&c!=="#"){ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillRect(x*s,y*s,s+.5,s+.5)}
+ }
+ ctx.strokeStyle="rgba(0,0,0,.12)";ctx.lineWidth=1;ctx.beginPath();for(let x=0;x<=W;x++){ctx.moveTo(x*s,0);ctx.lineTo(x*s,H*s)}for(let y=0;y<=H;y++){ctx.moveTo(0,y*s);ctx.lineTo(W*s,y*s)}ctx.stroke();
+ // raggio di movimento
+ const sel=tok(ROLE==="player"?ME:SEL);
+ if(sel&&!sel.down&&(ROLE==="master"||S.free||S.turn===sel.id)){const r=reach(sel,ROLE==="master"&&sel.kind==="enemy"?Math.floor(sel.speed/M*(sel.dash?2:1))-sel.used:undefined);
+  r.forEach((d,k)=>{const x=k%W,y=Math.floor(k/W);if(vv&&fogOn&&!vv.vis.has(k))return;ctx.fillStyle="rgba(79,195,161,.28)";ctx.fillRect(x*s+1,y*s+1,s-2,s-2)})}
+ // segnalini
+ S.tokens.forEach(t=>{if(t.reserve)return;const i=t.y*W+t.x;
+  if(vv&&t.kind==="enemy"&&(!vv.vis.has(i)||t.hidden))return;
+  if(vv&&fogOn&&!vv.exp.has(i))return;
+  const cx=(t.x+.5)*s,cy=(t.y+.5)*s,r=s*.42;
+  ctx.globalAlpha=t.down?.35:(t.hidden?.5:1);
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=t.color;ctx.fill();
+  ctx.lineWidth=Math.max(2,s*.06);ctx.strokeStyle=t.id===S.turn?"#ffcf6e":(t.id===SEL||t.id===ME?"#ffffff":"rgba(0,0,0,.6)");ctx.stroke();
+  if(t.hidden&&t.kind!=="enemy"){ctx.save();ctx.globalAlpha=1;ctx.setLineDash([s*.12,s*.08]);ctx.lineWidth=Math.max(2,s*.07);ctx.strokeStyle="#9fe3ff";ctx.beginPath();ctx.arc(cx,cy,r+s*.06,0,Math.PI*2);ctx.stroke();ctx.restore()}
+  ctx.fillStyle="#fff";ctx.font=`800 ${Math.max(10,s*.36)}px Alegreya Sans, sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+  const num=(t.name.match(/\s(\d+)$/)||[])[1];const words=t.name.replace(/\s\d+$/,"").split(/[\s-]+/).filter(Boolean);const lab=num?words[0][0].toUpperCase()+num:words.slice(0,2).map(w=>w[0]).join("").toUpperCase();ctx.fillText(lab,cx,cy+1);
+  if(t.down){ctx.strokeStyle="#000";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx-r*.6,cy-r*.6);ctx.lineTo(cx+r*.6,cy+r*.6);ctx.moveTo(cx+r*.6,cy-r*.6);ctx.lineTo(cx-r*.6,cy+r*.6);ctx.stroke()}
+  ctx.globalAlpha=1;
+  if(s>34){ctx.font=`600 ${Math.max(10,s*.22)}px Alegreya Sans, sans-serif`;ctx.fillStyle="rgba(0,0,0,.75)";const tw=ctx.measureText(t.name).width+8;ctx.fillRect(cx-tw/2,cy+r+2,tw,s*.28);ctx.fillStyle="#fff";ctx.fillText(t.name+(t.hidden?" (nascosto)":""),cx,cy+r+2+s*.14)}
+ });
+ if(S.revealAll&&ROLE==="master"){ctx.fillStyle="rgba(79,195,161,.9)";ctx.font="700 14px Alegreya Sans";ctx.textAlign="left";ctx.fillText("Nebbia disattivata",8,-6)}
+}
+
+/* ================= INPUT ================= */
+function cellAt(px,py){const s=VIEW.scale;return[Math.floor((px-VIEW.ox)/s),Math.floor((py-VIEW.oy)/s)]}
+function bindPointer(){
+ const pts=new Map();let start=null,moved=false,pinch=null;
+ cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.offsetX,y:e.offsetY});if(pts.size===1){start={x:e.offsetX,y:e.offsetY,ox:VIEW.ox,oy:VIEW.oy};moved=false}else if(pts.size===2){const[a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),s:VIEW.scale,mx:(a.x+b.x)/2,my:(a.y+b.y)/2,ox:VIEW.ox,oy:VIEW.oy};moved=true}});
+ cv.addEventListener("pointermove",e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
+  if(pts.size===2&&pinch){const[a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);const ns=Math.max(6,Math.min(160,pinch.s*d/pinch.d));VIEW.ox=pinch.mx-(pinch.mx-pinch.ox)*ns/pinch.s;VIEW.oy=pinch.my-(pinch.my-pinch.oy)*ns/pinch.s;VIEW.scale=ns;VIEW.follow=false;draw()}
+  else if(pts.size===1&&start){const dx=e.offsetX-start.x,dy=e.offsetY-start.y;if(Math.hypot(dx,dy)>8)moved=true;if(moved){VIEW.ox=start.ox+dx;VIEW.oy=start.oy+dy;VIEW.follow=false;draw()}}});
+ const up=e=>{const was=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(was&&pts.size===0&&!moved){onTap(e.offsetX,e.offsetY)}if(pts.size===0)start=null};
+ cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",e=>{pts.delete(e.pointerId);pinch=null;start=null});
+ cv.addEventListener("wheel",e=>{e.preventDefault();const f=e.deltaY<0?1.12:1/1.12;const ns=Math.max(6,Math.min(160,VIEW.scale*f));VIEW.ox=e.offsetX-(e.offsetX-VIEW.ox)*ns/VIEW.scale;VIEW.oy=e.offsetY-(e.offsetY-VIEW.oy)*ns/VIEW.scale;VIEW.scale=ns;VIEW.follow=false;draw()},{passive:false});
+}
+function onTap(px,py){
+ if(!S)return;const[x,y]=cellAt(px,py);if(!isCell(S.grid,x,y))return;
+ if(ROLE==="table")return;
+ if(ROLE==="master"){
+  if(EDIT&&EDIT.startsWith("place:")){const t=tok(EDIT.slice(6));if(t){if(blocksMove(ch(S.grid,x,y))||tokAt(x,y)){toast("Scegli una casella libera");return}t.x=x;t.y=y;t.reserve=false;EDIT=null;SEL=t.id;broadcast();renderSide();draw();toast(t.name+" entra in campo"+(t.hidden?" (nascosto)":""))}return}
+  if(EDIT==="door"){const c=S.grid[y][x];if(c==="D"||c==="d"){S.grid[y]=S.grid[y].slice(0,x)+(c==="D"?"d":"D")+S.grid[y].slice(x+1);updateExplored();broadcast();draw()}else toast("Tocca una porta");return}
+  const t=tokAt(x,y);if(t){SEL=SEL===t.id?null:t.id;renderSide();draw();return}
+  if(SEL){const err=applyMove(SEL,x,y,true);if(err)toast(err);else{updateExplored();broadcast();renderSide()}draw()}return}
+ if(ROLE==="player"){const me=tok(ME);if(!me)return;if(me.x===x&&me.y===y)return;
+  if(!S.free&&S.turn!==ME){toast("Aspetta il tuo turno");return}
+  const W=S.grid[0].length;if(reach(me).get(y*W+x)==null){toast("Troppo lontano");return}
+  send({t:"move",id:ME,x,y})}
+}
+
+/* ================= PANNELLI ================= */
+function renderSide(){
+ const sd=$("#side");if(!S){sd.innerHTML="";return}
+ if(ROLE!=="master"){sd.hidden=true;$("#sideToggle").hidden=true;return}
+ $("#sideToggle").hidden=false;
+ const cur=tok(S.turn),sel=tok(SEL);const players=[...CONNS.values()].filter(c=>c.role==="player"&&c.id).length,tables=[...CONNS.values()].filter(c=>c.role==="table").length;
+ sd.innerHTML=`
+ <div class="row"><button class="pri" id="mQr">QR per i telefoni</button><button id="mTable">Vista tavolo</button></div>
+ <div class="note">${players} telefoni collegati${tables?` · ${tables} viste tavolo`:""}</div>
+ <h3>Modalità</h3>
+ <div class="row"><button id="mFree" class="${S.free?"on":""}">Esplorazione libera</button><button id="mCombat" class="${S.free?"":"on"}">Combattimento a turni</button></div>
+ ${S.free?'<div class="note">I giocatori si muovono quando vogliono, senza limite di metri.</div>':`<div class="row"><button class="pri" id="mNext">Turno successivo</button><span class="note">Di turno: <b>${cur?esc(cur.name):"nessuno"}</b></span></div><div class="note">Tocca un segnalino nella lista per dargli il turno. Il raggio si azzera a ogni nuovo turno.</div>`}
+ <h3>Nebbia e porte</h3>
+ <div class="row"><button id="mFog" class="${S.revealAll?"":"on"}">${S.revealAll?"Nebbia spenta":"Nebbia attiva"}</button><button id="mDoor" class="${EDIT==="door"?"on":""}">Apri/chiudi porte</button><button id="mResetFog">Azzera esplorato</button></div>
+ ${sel?`<h3>Selezionato</h3><div class="card" style="padding:10px;gap:8px"><b>${esc(sel.name)}</b><div class="note">${sel.kind==="enemy"?"Nemico":sel.kind==="ally"?"Alleato":"Personaggio"}${sel.owner?" · "+esc(sel.owner):""} · ${sel.speed} m · usati ${(sel.used*M).toFixed(1).replace(".0","")} m${sel.dash?" · Scatto":""}</div>
+  <div class="row"><button id="sHide" class="${sel.hidden?"on":""}">${sel.kind==="enemy"?(sel.hidden?"Nascosto: mostra ai giocatori":"Nascondi ai giocatori"):(sel.hidden?"Nascosto: esce allo scoperto":"Nascondi")}</button><button id="sTurn">Dai il turno</button><button id="sDash" class="${sel.dash?"on":""}">Scatto</button><button id="sDown">${sel.down?"Rialza":"A terra / morto"}</button><button class="dng" id="sDel">Togli</button></div>
+  <div class="note">Tocca una casella della mappa per spostarlo.</div></div>`:'<div class="note">Tocca un segnalino sulla mappa per selezionarlo e spostarlo.</div>'}
+ ${S.tokens.some(t=>t.reserve)?`<h3>In riserva</h3><div class="note">Entrano a metà scontro. Premi «Fai entrare», poi tocca la casella.</div>${S.tokens.filter(t=>t.reserve).map(t=>`<div class="row"><span class="dot" style="width:14px;height:14px;border-radius:50%;background:${t.color}"></span><b style="flex:1">${esc(t.name)}</b><button data-place="${t.id}" class="${EDIT==="place:"+t.id?"on":""}">${EDIT==="place:"+t.id?"Tocca la mappa…":"Fai entrare"}</button></div>`).join("")}`:""}
+ <h3>Segnalini</h3>
+ <div style="display:flex;flex-direction:column;gap:6px">${S.tokens.filter(t=>!t.reserve).map(t=>`<div class="tok ${t.id===SEL?"sel":""} ${t.id===S.turn?"cur":""}" data-id="${t.id}"><span class="dot" style="background:${t.color};opacity:${t.hidden?.45:1}"></span><b>${esc(t.name)}</b><small>${t.down?"a terra":t.hidden?(t.kind==="enemy"?"invisibile ai giocatori":"nascosto"):t.owner?esc(t.owner):""}</small></div>`).join("")}</div>
+ <div class="row"><input id="mNewName" placeholder="Nuovo nemico" style="flex:1;min-width:120px"><input id="mNewN" type="number" min="1" value="1" aria-label="Quantità"><button id="mAdd">+ In riserva</button></div>
+ <h3>Legenda</h3>
+ <div class="legend"><i style="background:#2b2622"></i><span>Muro</span><i style="background:#8a9a6a"></i><span>Terreno difficile (costa doppio)</span><i style="background:#8b6a44"></i><span>Ostacolo: blocca il passo, non la vista</span><i style="background:#b7aa8e"></i><span>Sporgenza</span><i style="background:#d9b27a"></i><span>Porta</span></div>
+ <div class="note">${esc(MAPS[S.mapId]?.note||"")}</div>
+ <div class="row"><button class="dng" id="mEnd">Chiudi la battaglia</button></div>`;
+ const on=(id,f)=>{const el=sd.querySelector("#"+id);if(el)el.onclick=f};
+ on("mQr",showQr);on("mTable",()=>window.open(location.pathname+"?r="+encodeURIComponent(S.room)+"&v=tavolo","tavolo"));
+ on("mFree",()=>{S.free=true;S.turn=null;broadcast();renderSide();renderBar();draw()});
+ on("mCombat",()=>{S.free=false;S.tokens.forEach(t=>{t.used=0;t.dash=false});broadcast();renderSide();renderBar();draw()});
+ on("mNext",nextTurn);on("mFog",()=>{S.revealAll=!S.revealAll;broadcast();renderSide();draw()});
+ on("mDoor",()=>{EDIT=EDIT==="door"?null:"door";renderSide()});
+ on("mResetFog",()=>{S.explored={};updateExplored();broadcast();draw()});
+ on("sHide",()=>{sel.hidden=!sel.hidden;broadcast();renderSide();draw()});
+ on("sTurn",()=>{giveTurn(sel.id)});on("sDash",()=>{sel.dash=!sel.dash;broadcast();renderSide();draw()});
+ on("sDown",()=>{sel.down=!sel.down;broadcast();renderSide();draw()});
+ on("sDel",()=>{S.tokens=S.tokens.filter(t=>t.id!==sel.id);SEL=null;if(S.turn===sel.id)S.turn=null;broadcast();renderSide();draw()});
+ on("mAdd",()=>{const n=$("#mNewName").value.trim();if(!n){toast("Scrivi un nome");return}const q=Math.max(1,+$("#mNewN").value||1);const c=mergeEnemies([{name:n,n:q+S.tokens.filter(t=>t.name===n||t.name.replace(/\s\d+$/,"")===n).length}]);toast(c+" in riserva")});
+ on("mEnd",()=>{if(on.armed){ls.set("mb-master",null);location.href=location.pathname}else{on.armed=true;sd.querySelector("#mEnd").textContent="Conferma: chiudi"}});
+ sd.querySelectorAll("[data-place]").forEach(b=>b.onclick=()=>{const id=b.dataset.place;EDIT=EDIT==="place:"+id?null:"place:"+id;renderSide()});
+ sd.querySelectorAll(".tok").forEach(el=>el.onclick=()=>{const id=el.dataset.id;if(!S.free&&SEL===id){giveTurn(id)}else{SEL=id;renderSide();draw()}});
+}
+function giveTurn(id){const t=tok(id);if(!t)return;S.free=false;S.turn=id;t.used=0;t.dash=false;broadcast();renderSide();renderBar();draw()}
+function nextTurn(){const list=S.tokens.filter(t=>!t.down&&!t.reserve);if(!list.length)return;const i=list.findIndex(t=>t.id===S.turn);giveTurn(list[(i+1)%list.length].id)}
+function renderBar(){
+ const b=$("#bar");if(!S){b.innerHTML="";return}
+ if(ROLE==="master"){const sel=tok(SEL);b.innerHTML=`<div class="info">${S.free?"Esplorazione libera":"Combattimento · di turno: <b>"+esc(tok(S.turn)?.name||"nessuno")+"</b>"}${sel?" · selezionato: <b>"+esc(sel.name)+"</b>":""}</div><button id="bFit">Adatta</button>`;b.querySelector("#bFit").onclick=()=>{VIEW.fitted=false;draw()};return}
+ if(ROLE==="table"){const cur=tok(S.turn);b.innerHTML=`<div class="info">${S.free?"Esplorazione":"Di turno: <b>"+esc(cur?.name||"—")+"</b>"}</div><button id="bFollow" class="${VIEW.follow?"on":""}">Segui il turno</button><button id="bFit">Tutta la mappa</button>`;b.querySelector("#bFollow").onclick=()=>{VIEW.follow=!VIEW.follow;draw();renderBar()};b.querySelector("#bFit").onclick=()=>{VIEW.follow=false;VIEW.fitted=false;draw();renderBar()};return}
+ const me=tok(ME);if(!me){b.innerHTML='<div class="info">In attesa…</div>';return}
+ const myTurn=S.free||S.turn===ME;const left=S.free?null:Math.max(0,budget(me));
+ b.innerHTML=`<div class="info"><b style="color:${me.color}">${esc(me.name)}</b> · ${S.free?"esplorazione libera":myTurn?`tocca a te: <b>${(left*M).toString().replace(".",",")} m</b> rimasti`:`turno di ${esc(tok(S.turn)?.name||"—")}`}</div>${!S.free&&myTurn?`<button id="bDash" class="${me.dash?"on":""}">Scatto</button><button class="pri" id="bEnd">Fine turno</button>`:""}<button id="bHide" class="${me.hidden?"on":""}">${me.hidden?"Nascosto · esci":"Nasconditi"}</button><button id="bCenter">Centra</button>`;
+ const on=(id,f)=>{const el=b.querySelector("#"+id);if(el)el.onclick=f};
+ on("bDash",()=>send({t:"dash",id:ME}));on("bHide",()=>send({t:"hide",id:ME}));on("bEnd",()=>send({t:"endturn"}));on("bCenter",()=>{VIEW.follow=true;draw()});
+}
+$("#sideToggle").onclick=()=>$("#side").classList.toggle("closed");
+
+/* ================= QR ================= */
+function joinUrl(){return location.origin+location.pathname+"?r="+encodeURIComponent(S.room)}
+function showQr(){const m=$("#qrModal");m.hidden=false;$("#qr").innerHTML="";$("#qrCode").textContent=S.room;$("#qrUrl").textContent=joinUrl();if(typeof QRCode!=="undefined")new QRCode($("#qr"),{text:joinUrl(),width:220,height:220});else $("#qr").innerHTML='<p style="color:#000">QR non disponibile offline: usa il codice.</p>'}
+$("#qrClose").onclick=()=>$("#qrModal").hidden=true;
+
+/* ================= SETUP MASTER ================= */
+let SETUP=null;
+function openSetup(cfg){
+ SETUP={map:cfg.map&&MAPS[cfg.map]?cfg.map:"n6",title:cfg.title||"",pcs:cfg.pcs||ls.get("mb-party",DEFAULT_PCS),enemies:cfg.enemies||[]};
+ show("#scrSetup");$("#setupTitle").textContent=cfg.title?"Prepara: "+cfg.title:"Prepara la battaglia";
+ $("#setMap").innerHTML=Object.entries(MAPS).map(([k,m])=>`<option value="${k}" ${k===SETUP.map?"selected":""}>${esc(m.name)}</option>`).join("");
+ $("#setMap").onchange=()=>{SETUP.map=$("#setMap").value;renderSetup()};renderSetup();
+}
+function renderSetup(){
+ $("#setMapNote").textContent=MAPS[SETUP.map].note||"";
+ $("#setPcs").innerHTML=SETUP.pcs.map((p,i)=>`<div class="pcrow"><input type="color" value="${p.color}" data-i="${i}" data-f="color" aria-label="Colore"><input value="${esc(p.name)}" data-i="${i}" data-f="name" aria-label="Nome"><input type="number" step="1.5" value="${p.speed}" data-i="${i}" data-f="speed" aria-label="Velocità"><input type="number" step="3" value="${p.dv}" data-i="${i}" data-f="dv" aria-label="Scurovisione"><button data-del="${i}" aria-label="Togli">✕</button></div>`).join("");
+ $("#setPcs").querySelectorAll("input").forEach(el=>el.oninput=()=>{const p=SETUP.pcs[el.dataset.i];p[el.dataset.f]=el.type==="number"?+el.value:el.value});
+ $("#setPcs").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{SETUP.pcs.splice(+b.dataset.del,1);renderSetup()});
+ $("#setEnemies").innerHTML=SETUP.enemies.length?SETUP.enemies.map((e,i)=>`<div class="row"><span style="flex:1">${esc(e.name)}${e.ally?' <small class="note">alleato</small>':""}</span><button data-res="${i}" class="${e.reserve?"on":""}" title="Entra a metà scontro">${e.reserve?"In riserva":"In campo"}</button><input type="number" min="0" value="${e.n||1}" data-ei="${i}" aria-label="Quantità di ${esc(e.name)}"><button data-edel="${i}" aria-label="Togli">✕</button></div>`).join(""):'<p class="note">Nessun nemico: aggiungili qui o dalla mappa.</p>';
+ $("#setEnemies").querySelectorAll("[data-ei]").forEach(el=>el.oninput=()=>{SETUP.enemies[el.dataset.ei].n=Math.max(0,+el.value||0)});
+ $("#setEnemies").querySelectorAll("[data-res]").forEach(b=>b.onclick=()=>{const e=SETUP.enemies[b.dataset.res];e.reserve=!e.reserve;renderSide&&renderSetup()});
+ $("#setEnemies").querySelectorAll("[data-edel]").forEach(b=>b.onclick=()=>{SETUP.enemies.splice(+b.dataset.edel,1);renderSetup()});
+}
+$("#addPc").onclick=()=>{SETUP.pcs.push({name:"Nuovo PG",color:"#"+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,"0"),speed:9,dv:0});renderSetup()};
+$("#addEn").onclick=()=>{const n=$("#newEnName").value.trim();if(!n){$("#setupErr").textContent="Scrivi il nome del nemico.";return}$("#setupErr").textContent="";SETUP.enemies.push({name:n,n:+$("#newEnN").value||1});$("#newEnName").value="";renderSetup()};
+$("#createRoom").onclick=()=>{const pcs=SETUP.pcs.filter(p=>p.name.trim());ls.set("mb-party",pcs);const st=newState({room:roomCode(),map:SETUP.map,title:SETUP.title,pcs,enemies:SETUP.enemies.filter(e=>e.n>0)});history.replaceState(null,"",location.pathname+"?master="+encodeURIComponent(st.room));startMaster(st)};
+
+function offerMerge(cfg,info,MB){show("#scrHome");$("#scrHome .box").innerHTML=`<div class="card"><h2>C'è una battaglia in corso</h2><p>«${esc(info.title)}», stanza <b>${esc(info.room)}</b>, è aperta in un'altra scheda.</p><p class="note">Posso aggiungere i nemici che mancano, in riserva, senza toccare il resto.</p><div class="row"><button class="pri" id="doMerge">Aggiungi alla battaglia in corso</button><button id="doNew">Nuova battaglia</button></div><div class="note" id="mergeOut"></div></div>`;
+ $("#doMerge").onclick=()=>MB.postMessage({t:"merge",room:info.room,enemies:cfg.enemies||[]});$("#doNew").onclick=()=>openSetup(cfg)}
+/* ================= AVVIO ================= */
+(function boot(){
+ const q=new URLSearchParams(location.search);const h=location.hash;
+ if(h.startsWith("#cfg=")){let cfg=null;try{cfg=JSON.parse(b64d(h.slice(5)))}catch(e){toast("Configurazione non valida")}
+  if(cfg){history.replaceState(null,"",location.pathname);let answered=false;
+   try{const MB=new BroadcastChannel(PEER_PREFIX+"master");MB.onmessage=e=>{const m=e.data||{};if(m.t==="pong"&&!answered){answered=true;offerMerge(cfg,m,MB)}if(m.t==="merged"){$("#mergeOut").textContent=m.n?m.n+" nemici aggiunti in riserva nella battaglia in corso. Puoi chiudere questa scheda.":"Nella battaglia in corso c'erano già tutti."}};MB.postMessage({t:"ping"})}catch(e){}
+   setTimeout(()=>{if(!answered)openSetup(cfg)},700);return}}
+ if(q.get("master")){const st=ls.get("mb-master",null);if(st&&st.room===q.get("master")){startMaster(st);return}}
+ if(q.get("r")){startClient(q.get("r").toUpperCase(),q.get("v")==="tavolo");return}
+ show("#scrHome");const st=ls.get("mb-master",null);if(st){$("#resumeMaster").hidden=false;$("#resumeMaster").textContent="Riprendi: "+st.title+" ("+st.room+")";$("#resumeMaster").onclick=()=>{history.replaceState(null,"",location.pathname+"?master="+st.room);startMaster(st)}}
+ $("#newMaster").onclick=()=>openSetup({});
+ $("#joinGo").onclick=()=>{const c=$("#joinCode").value.trim().toUpperCase();if(!c){$("#joinErr").textContent="Scrivi il codice della stanza.";return}location.href=location.pathname+"?r="+encodeURIComponent(c)};
+ $("#joinCode").oninput=()=>$("#joinErr").textContent="";
+})();
+</script>
+</body>
+</html>
