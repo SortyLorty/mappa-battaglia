@@ -10,24 +10,31 @@ Mappa tattica per le one-shot della Gilda di Boar Tail: il master apre la battag
 
 Le caselle `X` sono buchi nel muro. Solo i nemici possono entrarci: chi ci arriva esce dalla mappa. Ogni nemico ha il suo numero di uscita (badge giallo, visibile solo al master). I giocatori non vedono i buchi finché il master non li rivela dal pannello «Punti di fuga» (per esempio dopo una prova di Saggezza (Percezione) CD 15). Sulle mappe buie c'è il pulsante «Torcia».
 
-## Mappe incluse
+## Mappe incluse, divise per one-shot
 
-- Nodo 3 · Gli schiavi in fuga (buia, punti di fuga)
-- Nodo 6 · La galleria dei portatori
-- Nodo 7 · Il magazzino del bottino (gabbia degli sciami)
-- Nodo 9 · Il recinto dei prigionieri (sbarre, gabbia di Kem)
-- Atto 3 · L'assalto alla Grotta della Gloria
-- Atto 4 · Il Pozzo e la Macchina
-- Stanza vuota 20×14
+Nel menu «Mappa» della preparazione le mappe sono raggruppate per one-shot. I gruppi sono nell'elenco `ONESHOTS`, subito dopo `MAPS`: per una one-shot nuova basta aggiungere un gruppo con gli id delle sue mappe. Le mappe che non stanno in nessun gruppo finiscono in «Altre mappe».
 
-L'Esame di Rango C (Torre Sommersa di Verdaluce):
+### Il Grande e Glorioso Me
 
-- Esame · Atto 1 · La carovana (bosco, alleati da proteggere)
-- Esame · Atto 2 · L'Atrio degli Eroi (sala rotonda con le statue)
-- Esame · Atto 2 · La Sala dei Forzieri (mimic sulla pedana)
-- Esame · Atto 2 · Il Ponte sull'Abisso (voragine)
-- Esame · Atto 3 · Il Nucleo di Smeraldo (lago, Virydrax in riserva)
-- Esame · Atto 3 · Le rovine (variante se il dungeon esplode)
+- `n3` Nodo 3 · Gli schiavi in fuga (buia, punti di fuga)
+- `n6` Nodo 6 · La galleria dei portatori
+- `n7` Nodo 7 · Il magazzino del bottino (gabbia degli sciami)
+- `n9` Nodo 9 · Il recinto dei prigionieri (sbarre, gabbia di Kem)
+- `a3` Atto 3 · L'assalto alla Grotta della Gloria
+- `a4` Atto 4 · Il Pozzo e la Macchina
+
+### L'Esame di Rango C (Torre Sommersa di Verdaluce)
+
+- `carovana` Atto 1 · La carovana (bosco, alleati da proteggere)
+- `atrio` Atto 2 · L'Atrio degli Eroi (sala rotonda con le statue)
+- `forzieri` Atto 2 · La Sala dei Forzieri (mimic sulla pedana)
+- `ponte` Atto 2 · Il Ponte sull'Abisso (voragine)
+- `nucleo` Atto 3 · Il Nucleo di Smeraldo (lago, Virydrax in riserva)
+- `rovine` Atto 3 · Le rovine (variante se il dungeon esplode)
+
+### Altre mappe
+
+- `vuota` Stanza vuota 20×14
 
 Ogni mappa può definire `spawns` (posizioni di partenza per ruolo, in base al nome del nemico) e `marks` (etichette; quelle «solo master» sono viola).
 

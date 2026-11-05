@@ -385,6 +385,14 @@ const MAPS={
  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"]},
  vuota:{name:"Stanza vuota 20×14",light:"luce",note:"Per battaglie improvvisate.",rows:(()=>{const r=[];for(let y=0;y<14;y++){let s="";for(let x=0;x<20;x++){const edge=y===0||y===13||x===0||x===19;s+=edge?"#":(x<=2&&y>=5&&y<=8?"P":(x>=16&&y>=5&&y<=8?"E":"."))}r.push(s)}return r})()}
 };
+/* Mappe divise per one-shot: il menu «Mappa» le mostra in questi gruppi, nell'ordine dato.
+   Per una one-shot nuova aggiungi qui un gruppo con gli id delle sue mappe; "strip" toglie un prefisso dal nome nel menu.
+   Le mappe che non stanno in nessun gruppo finiscono in «Altre mappe». */
+const ONESHOTS=[
+ {name:"Il Grande e Glorioso Me",maps:["n3","n6","n7","n9","a3","a4"]},
+ {name:"L'Esame di Rango C",maps:["carovana","atrio","forzieri","ponte","nucleo","rovine"],strip:"Esame · "},
+ {name:"Altre mappe",maps:["vuota"]}
+];
 const DEFAULT_PCS=[];
 const ENEMY_COLOR="#b5302a", ALLY_COLOR="#56c4a8";
 const PEER_PREFIX="mappa-battaglia-";
@@ -781,7 +789,9 @@ let SETUP=null;
 function openSetup(cfg){
  SETUP={combat:!!(cfg.enemies&&cfg.enemies.length),map:cfg.map&&MAPS[cfg.map]?cfg.map:"n6",title:cfg.title||"",pcs:(cfg.pcs||[]).map(p=>({...p})),enemies:cfg.enemies||[]};
  show("#scrSetup");$("#setupTitle").textContent=cfg.title?"Prepara: "+cfg.title:"Prepara la battaglia";
- $("#setMap").innerHTML=Object.entries(MAPS).map(([k,m])=>`<option value="${k}" ${k===SETUP.map?"selected":""}>${esc(m.name)}</option>`).join("");
+ {const opt=(k,nm)=>`<option value="${k}" ${k===SETUP.map?"selected":""}>${esc(nm)}</option>`;const used=new Set();const groups=ONESHOTS.map(g=>({name:g.name,items:g.maps.filter(k=>MAPS[k]).map(k=>{used.add(k);return opt(k,g.strip&&MAPS[k].name.startsWith(g.strip)?MAPS[k].name.slice(g.strip.length):MAPS[k].name)})}));
+  const rest=Object.keys(MAPS).filter(k=>!used.has(k)).map(k=>opt(k,MAPS[k].name));if(rest.length){const o=groups.find(g=>g.name==="Altre mappe");if(o)o.items.push(...rest);else groups.push({name:"Altre mappe",items:rest})}
+  $("#setMap").innerHTML=groups.filter(g=>g.items.length).map(g=>`<optgroup label="${esc(g.name)}">${g.items.join("")}</optgroup>`).join("")}
  $("#setMap").onchange=()=>{SETUP.map=$("#setMap").value;renderSetup()};renderSetup();
 }
 function renderSetup(){
