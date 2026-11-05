@@ -152,6 +152,8 @@ canvas{display:block;width:100%;height:100%}
    # muro · T muro con torcia · . pavimento · , terra battuta · ~ fango · w acqua · x macerie (terreno difficile)
    c carretto · b barile · k cassa (bloccano il passo, non la vista) · h sporgenza · o ossa · r rame (decorazioni)
    D porta chiusa · d porta aperta · P partenza PG · E partenza nemici
+   = sbarre (bloccano il passo, non la vista) · g gabbia coperta · M macchina o palco (bloccano tutto)
+   spawns: [regex nome, [[x,y]…]] posizioni di partenza per ruolo · marks: [x,y,testo,soloMaster] etichette
    X punto di fuga (solo i nemici ci entrano; i giocatori lo vedono solo se il master lo rivela) · L candela */
 const MAPS={
  n6:{name:"Nodo 6 · La galleria dei portatori",light:"luce",note:"Galleria di fogna illuminata da torce. A sud scorre il canale (terreno difficile). Sgnik parte davanti, a ovest del carretto, per il suo discorso; i guerrieri sono schierati su due file dietro di lui, i ratti sui fianchi, le Zanne Nere più indietro a controllarlo. Il carretto di rame dà mezza copertura; i fiondatori stanno sulla sporgenza a nord-est. Con l'allarme della campana i nemici partono pronti.",spawns:[[/sgnik|capo/i,[[15,5]]],[/fiond/i,[[26,3],[28,3],[27,2],[29,2]]],[/ratt|sciame/i,[[16,2],[16,8],[21,2],[21,8]]],[/zanna/i,[[24,4],[24,6],[25,8]]],[/guerr/i,[[17,5],[17,4],[17,6],[17,3],[17,7],[21,5],[21,4],[21,6],[21,3],[21,7]]]],rows:[
@@ -183,6 +185,88 @@ const MAPS={
  "######.#######...........#########.#####",
  "######X###########################X#####",
  "########################################"]},
+ n7:{name:"Nodo 7 · Il magazzino del bottino",light:"luce",note:"Camera piena di roba rubata. Il carretto di rame è legato alla porta della gabbia coperta: se qualcuno lo sposta senza tagliare la corda (Percezione CD 13), la gabbia si apre e gli sciami escono. Apri la porta della gabbia con «Apri/chiudi porte». Gli sciami partono dentro la gabbia.",spawns:[[/sciame|ratt/i,[[14,5],[16,5],[14,8],[16,8],[15,6],[15,7],[14,6],[16,7]]]],marks:[[9,5,"Carretto di rame"],[12,8,"Corda: Percezione CD 13",1],[15,9,"Gabbia coperta"],[3,2,"Bottino"]],rows:[
+ "####T###########T#####",
+ "#kkb.kk............kk#",
+ "#k.....r..........r.k#",
+ "#b..r.......o.......b#",
+ "#............ggggg...#",
+ "#............g...g...#",
+ "PP.......cc..D.E.g...#",
+ "PP.......cc..D.E.g...#",
+ "#............g...g...#",
+ "#..o.........ggggg...#",
+ "#....r...r...........#",
+ "#k...............r..k#",
+ "#kk...kkbb........bkk#",
+ "##########T###########"]},
+ n9:{name:"Nodo 9 · Il recinto dei prigionieri",light:"luce",note:"Le sbarre dividono la stanza: a nord i prigionieri incatenati, a nord-est la gabbia di Kem. Grizzik passeggia davanti al cancello con le chiavi e Zannagrossa alla catena; le Zanne Nere sorvegliano il cancello, i guerrieri sono sparsi per la stanza, i ratti girano tra loro. Lo scolo al centro è dove Grizzik getta le chiavi. A est, il passaggio verso la Grotta: se Grizzik scappa da lì, Skritch è avvisato. Cancello e gabbia si aprono con «Apri/chiudi porte».",spawns:[[/grizzik/i,[[12,8]]],[/zannagrossa/i,[[14,8]]],[/zanna/i,[[10,7],[13,7],[9,7]]],[/guerr/i,[[6,10],[20,9],[9,14],[18,14],[24,11],[15,15],[4,7]]],[/ratt/i,[[11,9],[17,11],[21,13],[7,12]]],[/^kem/i,[[26,2]]]],marks:[[11,3,"Prigionieri"],[11,6,"Cancello"],[26,4,"Gabbia di Kem"],[14,11,"Scolo"],[28,9,"Verso la Grotta"]],rows:[
+ "##############################",
+ "#......................=.....#",
+ "#........o..........o..=.....#",
+ "#...o..................D.....#",
+ "T................o.....=.....#",
+ "#......................======#",
+ "#==========DD==========......#",
+ "#............................#",
+ "#....xx..................k....",
+ "#.....,.......................",
+ "#............................#",
+ "PP............w..............#",
+ "PP................,......EE..#",
+ "PP......o....................T",
+ "#.....................o......#",
+ "#..bb.....................bb.#",
+ "#.k........................kk#",
+ "######T#############T#########"]},
+ a3:{name:"Atto 3 · L'assalto alla Grotta della Gloria",light:"luce",note:"I PG arrivano sulla sporgenza a ovest e scendono nella Fossa dalle macerie. La Fossa è piena di folla (falla scappare: ogni round una zona di 6 m diventa terreno difficile, TS For 12 o prono). I guerrieri ubriachi sono sparsi nella folla; le Zanne Nere sono schierate ai piedi della Tribuna, davanti al passaggio che porta al Pozzo. Skritch è sul trono in cima alla Tribuna e non combatte qui. Il cunicolo di Vesk lo vedi solo tu.",spawns:[[/zanna/i,[[26,10],[26,11],[27,8],[27,13],[25,9],[25,12],[24,10]]],[/guerr/i,[[14,7],[19,15],[21,9],[12,13]]]],marks:[[4,8,"Sporgenza"],[17,10,"Fossa della Festa"],[30,8,"Tribuna di Skritch · 6 m"],[30,12,"Trono"],[31,10,"Passaggio sotto la Tribuna"],[37,10,"Verso il Pozzo"],[5,7,"Cunicolo di Vesk",1]],rows:[
+ "########################################",
+ "############T#####T#####T###############",
+ "########..#..#..#..#..#..#..############",
+ "########...................###T#########",
+ "######..#..........o..............######",
+ "######......b..r..................######",
+ "######................b....#......######",
+ "####....#.........x.........MMMMMM######",
+ "#hhhhhhh.....o..............MMMMMM######",
+ "PPhhhhhh........b..........#MMMMMM......",
+ "PPhhhhhxx...........r...............E...",
+ "PPhhhhhxx.......xx.....o.............E..",
+ "PPhhhhhh..o...b............#MMMMMM......",
+ "#hhhhhhh#...........b.......MMMMMM######",
+ "####........r....o.......r..MMMMMM######",
+ "######.....................#......######",
+ "######..#..b............b.........######",
+ "######.......x....r..o............######",
+ "########...................###T#########",
+ "#########..#..#..#..#..#..#.############",
+ "##############T#######T#################",
+ "########################################"]},
+ a4:{name:"Atto 4 · Il Pozzo e la Macchina",light:"luce",note:"Camera circolare di 30 m sotto la torre. La Macchina occupa il centro: il portello del Cuore è alla base, verso l'ingresso sud, e Tritaossa ci sta davanti. La passerella a 6 m gira intorno alla Macchina su tre lati: ci si sale dalla scala a sud-est (caduta: 2d6). Il Governatore è sulla passerella nord, il foro della Lente sulla passerella ovest. I tecnici lavorano sulla passerella e alla base. Vesk entra dal suo cunicolo a ovest: tienilo in riserva e fallo entrare lì.",spawns:[[/tritaossa/i,[[11,15]]],[/tecnico/i,[[9,7],[14,7],[8,11],[15,10],[13,14]]],[/zanna/i,[[8,17],[15,17]]],[/vesk/i,[[2,10]]]],marks:[[11,14,"Portello · Cuore di Brace"],[11,7,"Governatore"],[8,10,"Foro della Lente"],[11,10,"Skritch · piattaforma 9 m"],[15,14,"Scala"],[1,11,"Cunicolo di Vesk"]],rows:[
+ "########################",
+ "##########....##########",
+ "#######..........#######",
+ "######.........o..######",
+ "#####T............T#####",
+ "####.............r..####",
+ "###...b..............###",
+ "###.....hhhhhhhh.....###",
+ "##..x...hMMMMMMh......##",
+ "##......hMMMMMMh...x..##",
+ "........hMMMMMMh......##",
+ "........hMMMMMMh......##",
+ "##......hMMMMMMh.EE...##",
+ "##...r..hMMMMMMh...b..##",
+ "##....................##",
+ "##T..................T##",
+ "###..................###",
+ "####..x...........x.####",
+ "#####..o........r..#####",
+ "######............######",
+ "#######..........#######",
+ "##########....##########",
+ "##########PPPP##########",
+ "##########PPPP##########"]},
  vuota:{name:"Stanza vuota 20×14",light:"luce",note:"Per battaglie improvvisate.",rows:(()=>{const r=[];for(let y=0;y<14;y++){let s="";for(let x=0;x<20;x++){const edge=y===0||y===13||x===0||x===19;s+=edge?"#":(x<=2&&y>=5&&y<=8?"P":(x>=16&&y>=5&&y<=8?"E":"."))}r.push(s)}return r})()}
 };
 const DEFAULT_PCS=[];
@@ -199,8 +283,8 @@ function roomCode(){const w=["RATTO","LAMA","TORRE","LUNA","FOGNA","ZANNA","RAME
 function show(id){["#scrHome","#scrSetup","#scrJoin","#scrMap"].forEach(s=>$(s).hidden=s!==id);$("#bar").hidden=id!=="#scrMap"}
 const isCell=(g,x,y)=>y>=0&&y<g.length&&x>=0&&x<g[0].length;
 const ch=(g,x,y)=>isCell(g,x,y)?g[y][x]:"#";
-const blocksSight=c=>c==="#"||c==="D"||c==="T"||c==="X";
-const blocksMove=c=>c==="#"||c==="D"||c==="T"||c==="c"||c==="b"||c==="k"||c==="X";
+const blocksSight=c=>c==="#"||c==="D"||c==="T"||c==="X"||c==="g"||c==="M";
+const blocksMove=c=>c==="#"||c==="D"||c==="T"||c==="c"||c==="b"||c==="k"||c==="X"||c==="="||c==="g"||c==="M";
 const canStep=(t,c)=>!blocksMove(c)||(c==="X"&&t.kind==="enemy");
 const isDiff=c=>c==="~"||c==="w"||c==="x";
 const M=1.5;
@@ -220,9 +304,10 @@ function newState(cfg){
  const st={v:1,room:cfg.room,title:cfg.title||m.name,mapId:cfg.map,light:m.light,grid:g,tokens:[],turn:null,free:!cfg.combat,revealAll:false,explored:{},seq:0,exits:[]};
  g.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==="X")st.exits.push({n:st.exits.length+1,x,y,found:false})}));
  const spP=[],spE=[];g.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==="P")spP.push([x,y]);if(c==="E")spE.push([x,y])}));
- let i=0;(cfg.pcs||[]).forEach(p=>{const s=spP[i++%Math.max(1,spP.length)]||[1,1];st.tokens.push(mkTok("pc",p,s))});
+ const near=(from,used)=>{const W=g[0].length,q=[from],seen=new Set([from+""]);while(q.length){const[x,y]=q.shift();if(!blocksMove(ch(g,x,y))&&!used.has(x+","+y))return[x,y];for(const[dx,dy]of[[1,0],[0,1],[0,-1],[-1,0]]){const n=[x+dx,y+dy];if(isCell(g,n[0],n[1])&&!seen.has(n+"")&&!blocksMove(ch(g,n[0],n[1]))){seen.add(n+"");q.push(n)}}}return[1,1]};
+ const usedP=new Set();(cfg.pcs||[]).forEach(p=>{let s=spP.find(([x,y])=>!usedP.has(x+","+y));if(!s)s=near(spP[0]||[1,1],usedP);usedP.add(s[0]+","+s[1]);st.tokens.push(mkTok("pc",p,s))});
  let j=0;const taken=new Set();const roleSpot=name=>{for(const[re,cells]of(m.spawns||[])){if(!re.test(name))continue;for(const[x,y]of cells){const k=x+","+y;if(!taken.has(k)){taken.add(k);return[x,y]}}}return null};
- (cfg.enemies||[]).forEach(e=>{for(let k=1;k<=(e.n||1);k++){let s=e.reserve?[-1,-1]:roleSpot(e.name);if(!s){do{s=spE[j++%Math.max(1,spE.length)]||[g[0].length-2,1]}while(taken.has(s[0]+","+s[1])&&j<spE.length*2);taken.add(s[0]+","+s[1])}const t=mkTok(e.ally?"ally":"enemy",{name:(e.n>1?e.name+" "+k:e.name),color:e.ally?ALLY_COLOR:ENEMY_COLOR,speed:e.speed||9,dv:e.dv||18},s,!e.ally);if(e.reserve)t.reserve=true;st.tokens.push(t)}});
+ (cfg.enemies||[]).forEach(e=>{for(let k=1;k<=(e.n||1);k++){let s=e.reserve?[-1,-1]:roleSpot(e.name);if(!s&&e.ally){s=near(spP[0]||[1,1],new Set([...usedP,...taken]));taken.add(s[0]+","+s[1]);usedP.add(s[0]+","+s[1])}if(!s){do{s=spE[j++%Math.max(1,spE.length)]||[g[0].length-2,1]}while(taken.has(s[0]+","+s[1])&&j<spE.length*2);taken.add(s[0]+","+s[1])}const t=mkTok(e.ally?"ally":"enemy",{name:(e.n>1?e.name+" "+k:e.name),color:e.ally?ALLY_COLOR:ENEMY_COLOR,speed:e.speed||9,dv:e.dv||18},s,!e.ally);if(e.reserve)t.reserve=true;st.tokens.push(t)}});
  return st;
 }
 let UID=1;
@@ -375,6 +460,8 @@ function cellBase(g,x,y,s){
   if(c==="T"){const gr=ctx.createRadialGradient(X+s/2,Y+s*.7,1,X+s/2,Y+s*.7,s*1.6);gr.addColorStop(0,"rgba(255,190,90,.55)");gr.addColorStop(1,"rgba(255,190,90,0)");ctx.fillStyle=gr;ctx.fillRect(X-s,Y-s,s*3,s*3);ctx.fillStyle="#ffcf6e";ctx.beginPath();ctx.arc(X+s/2,Y+s*.65,s*.12,0,7);ctx.fill()}
   return}
  if(c==="w"){ctx.fillStyle=`hsl(185,${28+r1*8}%,${22+r2*4}%)`;ctx.fillRect(X,Y,s+.5,s+.5);ctx.strokeStyle="rgba(170,230,220,.25)";ctx.lineWidth=Math.max(1,s*.04);ctx.beginPath();const yy=Y+s*(.35+r1*.3);ctx.moveTo(X+s*.1,yy);ctx.quadraticCurveTo(X+s*.3,yy-s*.12,X+s*.5,yy);ctx.quadraticCurveTo(X+s*.7,yy+s*.12,X+s*.9,yy);ctx.stroke();return}
+ if(c==="g"){ctx.fillStyle=`hsl(30,${25+r1*8}%,${26+r2*5}%)`;ctx.fillRect(X,Y,s+.5,s+.5);ctx.strokeStyle="rgba(0,0,0,.35)";ctx.lineWidth=Math.max(1,s*.05);ctx.beginPath();ctx.moveTo(X,Y+s*(.3+r1*.3));ctx.quadraticCurveTo(X+s/2,Y+s*(.5+r2*.3),X+s,Y+s*(.3+r2*.3));ctx.stroke();return}
+ if(c==="M"){ctx.fillStyle=`hsl(24,${45+r1*15}%,${30+r2*10}%)`;ctx.fillRect(X,Y,s+.5,s+.5);ctx.strokeStyle="rgba(255,200,140,.25)";ctx.lineWidth=Math.max(1,s*.08);ctx.beginPath();if(r1>.5){ctx.moveTo(X,Y+s*.5);ctx.lineTo(X+s,Y+s*.5)}else{ctx.moveTo(X+s*.5,Y);ctx.lineTo(X+s*.5,Y+s)}ctx.stroke();if(r2>.7){ctx.fillStyle="rgba(120,255,120,.55)";ctx.beginPath();ctx.arc(X+s*(.3+r1*.4),Y+s*(.3+r2*.3),s*.12,0,7);ctx.fill()}else if(r2<.2){ctx.fillStyle="rgba(230,190,90,.7)";ctx.beginPath();ctx.arc(X+s/2,Y+s/2,s*.22,Math.PI,0);ctx.fill()}return}
  if(c==="X"){const e=exitAt(x,y);ctx.fillStyle=`hsl(25,10%,${12+r1*5}%)`;ctx.fillRect(X,Y,s+.5,s+.5);
   const gr=ctx.createRadialGradient(X+s/2,Y+s/2,1,X+s/2,Y+s/2,s*.5);gr.addColorStop(0,"#000");gr.addColorStop(1,"rgba(0,0,0,.2)");ctx.fillStyle=gr;ctx.beginPath();ctx.ellipse(X+s/2,Y+s/2,s*.42,s*.34,0,0,7);ctx.fill();
   ctx.strokeStyle=e&&e.found?"#ffcf6e":"rgba(255,207,110,.55)";ctx.lineWidth=Math.max(2,s*.07);if(!(e&&e.found))ctx.setLineDash([s*.1,s*.08]);ctx.beginPath();ctx.ellipse(X+s/2,Y+s/2,s*.42,s*.34,0,0,7);ctx.stroke();ctx.setLineDash([]);
@@ -392,6 +479,7 @@ function cellBase(g,x,y,s){
  if(c==="r"){for(let k=0;k<4;k++){ctx.fillStyle="#c87533";ctx.beginPath();ctx.arc(X+s*(.25+rnd(x,y,k+40)*.5),Y+s*(.25+rnd(x,y,k+50)*.5),s*.07,0,7);ctx.fill()}}
  if(c==="D"){ctx.fillStyle="#6b4424";ctx.fillRect(X+s*.1,Y+s*.3,s*.8,s*.4);ctx.fillStyle="#d9b27a";ctx.fillRect(X+s*.7,Y+s*.45,s*.08,s*.1)}
  if(c==="d"){ctx.strokeStyle="#6b4424";ctx.lineWidth=2;ctx.strokeRect(X+3,Y+3,s-6,s-6)}
+ if(c==="="){ctx.strokeStyle="#3b3f44";ctx.lineWidth=Math.max(2,s*.1);ctx.beginPath();const hz=ch(g,x-1,y)==="="||ch(g,x+1,y)==="="||ch(g,x-1,y)==="D"||ch(g,x+1,y)==="D";if(hz){for(let k=1;k<4;k++){ctx.moveTo(X+s*k/4,Y+s*.1);ctx.lineTo(X+s*k/4,Y+s*.9)}ctx.moveTo(X,Y+s*.5);ctx.lineTo(X+s,Y+s*.5)}else{for(let k=1;k<4;k++){ctx.moveTo(X+s*.1,Y+s*k/4);ctx.lineTo(X+s*.9,Y+s*k/4)}ctx.moveTo(X+s*.5,Y);ctx.lineTo(X+s*.5,Y+s)}ctx.stroke()}
  if(c==="L"){ctx.fillStyle="rgba(30,20,10,.35)";ctx.beginPath();ctx.ellipse(X+s/2,Y+s*.62,s*.26,s*.12,0,0,7);ctx.fill();ctx.fillStyle="#e8dcb8";ctx.fillRect(X+s*.42,Y+s*.32,s*.16,s*.32);ctx.strokeStyle="#333";ctx.lineWidth=Math.max(1,s*.04);ctx.beginPath();ctx.moveTo(X+s/2,Y+s*.32);ctx.lineTo(X+s/2,Y+s*.22);ctx.stroke()}
 }
 function drawProp(g,x,y,s){const c=g[y][x],X=x*s,Y=y*s;
@@ -435,6 +523,8 @@ function draw(){
   const [ex,ey]=PREVIEW.pts[PREVIEW.pts.length-1];ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.strokeRect(ex*s+3,ey*s+3,s-6,s-6)}
  // nebbia
  if(vv&&fogOn)for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(!vv.exp.has(i)){ctx.fillStyle="#000";ctx.fillRect(x*s-.5,y*s-.5,s+1,s+1)}else if(!vv.vis.has(i)){ctx.fillStyle="rgba(0,0,0,.6)";ctx.fillRect(x*s,y*s,s+.5,s+.5)}}
+ // etichette della mappa
+ const mk=(MAPS[S.mapId]||{}).marks||[];mk.forEach(([x,y,txt,mo])=>{if(ROLE!=="master"&&mo)return;if(vv&&fogOn&&!vv.exp.has(y*W+x))return;ctx.font=`600 ${Math.max(10,s*.24)}px Alegreya Sans, sans-serif`;const w=ctx.measureText(txt).width+10,h=Math.max(15,s*.36);const cx=(x+.5)*s,cy=(y+.5)*s;ctx.fillStyle=mo?"rgba(60,40,90,.85)":"rgba(20,16,10,.72)";ctx.beginPath();ctx.roundRect?ctx.roundRect(cx-w/2,cy-h/2,w,h,4):ctx.rect(cx-w/2,cy-h/2,w,h);ctx.fill();ctx.fillStyle=mo?"#d9c8ff":"#f1e4c8";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(txt,cx,cy+1)});
  // segnalini
  S.tokens.forEach(t=>{if(t.reserve)return;const i=t.y*W+t.x;
   if(vv&&t.kind==="enemy"&&(!vv.vis.has(i)||t.hidden))return;
@@ -509,7 +599,7 @@ function renderSide(){
  <div style="display:flex;flex-direction:column;gap:6px">${S.tokens.filter(t=>!t.reserve).map(t=>`<div class="tok ${t.id===SEL?"sel":""} ${t.id===S.turn?"cur":""}" data-id="${t.id}"><span class="dot" style="background:${t.color};opacity:${t.hidden?.45:1}"></span><b>${esc(t.name)}</b><small>${t.down?"a terra":t.hidden?(t.kind==="enemy"?"invisibile ai giocatori":"nascosto"):t.owner?esc(t.owner):""}</small></div>`).join("")}</div>
  <div class="row"><input id="mNewName" placeholder="Nuovo nemico" style="flex:1;min-width:120px"><input id="mNewN" type="number" min="1" value="1" aria-label="Quantità"><button id="mAdd">+ In riserva</button></div>
  <h3>Legenda</h3>
- <div class="legend"><i style="background:#2a2420"></i><span>Muro (con un punto giallo: torcia)</span><i style="background:#2f5a5c"></i><span>Acqua del canale: terreno difficile</span><i style="background:#5f6236"></i><span>Fango e macerie: terreno difficile</span><i style="background:#7a5530"></i><span>Carretto, barili, casse: bloccano il passo, non la vista</span><i style="background:#8e97a3"></i><span>Sporgenza rialzata (bordo scuro)</span><i style="background:#6b4424"></i><span>Porta</span>${S.exits&&S.exits.length?'<i style="background:#000;border-color:#ffcf6e;border-radius:50%"></i><span>Punto di fuga numerato (tratteggiato: ancora nascosto ai giocatori)</span>':""}</div>${S.light!=="luce"?'<div class="note">Mappa al buio: ognuno vede fino alla sua scurovisione; con la torcia accesa almeno 6 m.</div>':""}
+ <div class="legend"><i style="background:#2a2420"></i><span>Muro (con un punto giallo: torcia)</span><i style="background:#2f5a5c"></i><span>Acqua del canale: terreno difficile</span><i style="background:#5f6236"></i><span>Fango e macerie: terreno difficile</span><i style="background:#7a5530"></i><span>Carretto, barili, casse: bloccano il passo, non la vista</span><i style="background:#8e97a3"></i><span>Sporgenza rialzata (bordo scuro)</span><i style="background:#6b4424"></i><span>Porta, cancello o gabbia (si aprono con «Apri/chiudi porte»)</span><i style="background:repeating-linear-gradient(90deg,#3b3f44 0 3px,#a89c88 3px 6px)"></i><span>Sbarre: bloccano il passo, non la vista</span><i style="background:#5e4630"></i><span>Gabbia coperta da un telo</span><i style="background:#8a5a2e"></i><span>Macchina o palco: bloccano passo e vista</span><i style="background:#3c285a"></i><span>Etichetta viola: la vedi solo tu</span>${S.exits&&S.exits.length?'<i style="background:#000;border-color:#ffcf6e;border-radius:50%"></i><span>Punto di fuga numerato (tratteggiato: ancora nascosto ai giocatori)</span>':""}</div>${S.light!=="luce"?'<div class="note">Mappa al buio: ognuno vede fino alla sua scurovisione; con la torcia accesa almeno 6 m.</div>':""}
  <div class="note">${esc(MAPS[S.mapId]?.note||"")}</div>
  <div class="row"><button class="dng" id="mEnd">Chiudi la battaglia</button></div>`;
  const on=(id,f)=>{const el=sd.querySelector("#"+id);if(el)el.onclick=f};

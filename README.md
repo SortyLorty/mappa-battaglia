@@ -9,3 +9,15 @@ Mappa tattica per le one-shot della Gilda di Boar Tail: il master apre la battag
 ## Punti di fuga (nodo 3)
 
 Le caselle `X` sono buchi nel muro. Solo i nemici possono entrarci: chi ci arriva esce dalla mappa. Ogni nemico ha il suo numero di uscita (badge giallo, visibile solo al master). I giocatori non vedono i buchi finché il master non li rivela dal pannello «Punti di fuga» (per esempio dopo una prova di Saggezza (Percezione) CD 15). Sulle mappe buie c'è il pulsante «Torcia».
+
+## Mappe incluse
+
+- Nodo 3 · Gli schiavi in fuga (buia, punti di fuga)
+- Nodo 6 · La galleria dei portatori
+- Nodo 7 · Il magazzino del bottino (gabbia degli sciami)
+- Nodo 9 · Il recinto dei prigionieri (sbarre, gabbia di Kem)
+- Atto 3 · L'assalto alla Grotta della Gloria
+- Atto 4 · Il Pozzo e la Macchina
+- Stanza vuota 20×14
+
+Ogni mappa può definire `spawns` (posizioni di partenza per ruolo, in base al nome del nemico) e `marks` (etichette; quelle «solo master» sono viola).
