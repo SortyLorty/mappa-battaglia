@@ -103,7 +103,7 @@ canvas{display:block;width:100%;height:100%}
     </div>
     <div class="card">
       <h2>Personaggi del gruppo</h2>
-      <p class="note">Velocità e scurovisione in metri. I giocatori li scelgono dal telefono; chi non è in lista può registrarsi.</p>
+      <p class="note">Arrivano dallo schermo del master. I giocatori li scelgono dal telefono; chi non è in lista se ne crea uno. Velocità e scurovisione in metri.</p>
       <div class="pcrow h"><span>Colore</span><span>Nome</span><span>Vel.</span><span>Scuro.</span><span></span></div>
       <div id="setPcs" style="display:flex;flex-direction:column;gap:6px"></div>
       <div class="row"><button id="addPc">+ Personaggio</button></div>
@@ -151,7 +151,8 @@ canvas{display:block;width:100%;height:100%}
 /* ================= MAPPE =================
    # muro · T muro con torcia · . pavimento · , terra battuta · ~ fango · w acqua · x macerie (terreno difficile)
    c carretto · b barile · k cassa (bloccano il passo, non la vista) · h sporgenza · o ossa · r rame (decorazioni)
-   D porta chiusa · d porta aperta · P partenza PG · E partenza nemici */
+   D porta chiusa · d porta aperta · P partenza PG · E partenza nemici
+   X punto di fuga (solo i nemici ci entrano; i giocatori lo vedono solo se il master lo rivela) · L candela */
 const MAPS={
  n6:{name:"Nodo 6 · La galleria dei portatori",light:"luce",note:"Galleria di fogna illuminata da torce. A sud scorre il canale (terreno difficile). Il carretto di rame al centro dà mezza copertura; i fiondatori stanno sulla sporgenza a nord-est. Con l'allarme della campana i nemici partono pronti.",rows:[
  "################################",
@@ -167,13 +168,24 @@ const MAPS={
  "####wwwwwwwwwwwwwwwwwwwwwwwwwww#",
  "#####..x.....,..o..T#####..b####",
  "################################"]},
+ n3:{name:"Nodo 3 · Gli schiavi in fuga",light:"buio",exits:true,note:"Sala buia: la candela si è appena spenta. Gli schiavi partono dal centro, ognuno verso il suo punto di fuga numerato (Schiavo 1 → uscita 1 e così via). Con Scatto fanno 18 m a round: servono 2 round per arrivare. I punti di fuga restano nascosti ai giocatori finché non superano Saggezza (Percezione) CD 15: rivelali dal pannello.",rows:[
+ "########################################",
+ "######X###########################X#####",
+ "######.###########################.#####",
+ "###....,.......~~~...................###",
+ "#.........r..............x...r.......###",
+ "PP................o....r.............###",
+ "PP......####........EEE.....####.....###",
+ "PP......####.........L......####.......#",
+ "PP..................E.E.o..............X",
+ "#............o................~~~......#",
+ "###......x................,......x...###",
+ "######.#######...........#########.#####",
+ "######X###########################X#####",
+ "########################################"]},
  vuota:{name:"Stanza vuota 20×14",light:"luce",note:"Per battaglie improvvisate.",rows:(()=>{const r=[];for(let y=0;y<14;y++){let s="";for(let x=0;x<20;x++){const edge=y===0||y===13||x===0||x===19;s+=edge?"#":(x<=2&&y>=5&&y<=8?"P":(x>=16&&y>=5&&y<=8?"E":"."))}r.push(s)}return r})()}
 };
-const DEFAULT_PCS=[
- {name:"Ixtar-Gor",color:"#4f8a5a",speed:9,dv:0},
- {name:"Draeven Kross",color:"#6e96e6",speed:9,dv:36},
- {name:"Leonis Caliban",color:"#c9a35a",speed:7.5,dv:36}
-];
+const DEFAULT_PCS=[];
 const ENEMY_COLOR="#b5302a", ALLY_COLOR="#56c4a8";
 const PEER_PREFIX="mappa-battaglia-";
 
@@ -187,8 +199,9 @@ function roomCode(){const w=["RATTO","LAMA","TORRE","LUNA","FOGNA","ZANNA","RAME
 function show(id){["#scrHome","#scrSetup","#scrJoin","#scrMap"].forEach(s=>$(s).hidden=s!==id);$("#bar").hidden=id!=="#scrMap"}
 const isCell=(g,x,y)=>y>=0&&y<g.length&&x>=0&&x<g[0].length;
 const ch=(g,x,y)=>isCell(g,x,y)?g[y][x]:"#";
-const blocksSight=c=>c==="#"||c==="D"||c==="T";
-const blocksMove=c=>c==="#"||c==="D"||c==="T"||c==="c"||c==="b"||c==="k";
+const blocksSight=c=>c==="#"||c==="D"||c==="T"||c==="X";
+const blocksMove=c=>c==="#"||c==="D"||c==="T"||c==="c"||c==="b"||c==="k"||c==="X";
+const canStep=(t,c)=>!blocksMove(c)||(c==="X"&&t.kind==="enemy");
 const isDiff=c=>c==="~"||c==="w"||c==="x";
 const M=1.5;
 
@@ -204,7 +217,8 @@ let EDIT=null;      // strumento master: null | "door" | "fog"
 function newState(cfg){
  const m=MAPS[cfg.map]||MAPS.vuota;
  const g=m.rows.map(r=>r.padEnd(m.rows[0].length,"#"));
- const st={v:1,room:cfg.room,title:cfg.title||m.name,mapId:cfg.map,light:m.light,grid:g,tokens:[],turn:null,free:!cfg.combat,revealAll:false,explored:{},seq:0};
+ const st={v:1,room:cfg.room,title:cfg.title||m.name,mapId:cfg.map,light:m.light,grid:g,tokens:[],turn:null,free:!cfg.combat,revealAll:false,explored:{},seq:0,exits:[]};
+ g.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==="X")st.exits.push({n:st.exits.length+1,x,y,found:false})}));
  const spP=[],spE=[];g.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==="P")spP.push([x,y]);if(c==="E")spE.push([x,y])}));
  let i=0;(cfg.pcs||[]).forEach(p=>{const s=spP[i++%Math.max(1,spP.length)]||[1,1];st.tokens.push(mkTok("pc",p,s))});
  let j=0;(cfg.enemies||[]).forEach(e=>{for(let k=1;k<=(e.n||1);k++){const s=e.reserve?[-1,-1]:(spE[j++%Math.max(1,spE.length)]||[g[0].length-2,1]);const t=mkTok(e.ally?"ally":"enemy",{name:(e.n>1?e.name+" "+k:e.name),color:e.ally?ALLY_COLOR:ENEMY_COLOR,speed:e.speed||9,dv:e.dv||18},s,!e.ally);if(e.reserve)t.reserve=true;st.tokens.push(t)}});
@@ -241,7 +255,7 @@ function reach(t,limit){
  const g=S.grid,W=g[0].length,dist=new Map(),start=t.y*W+t.x;dist.set(start,0);
  const prev=new Map();dist.prev=prev;const q=[[t.x,t.y,0]];const lim=limit==null?budget(t):limit;
  while(q.length){q.sort((a,b)=>a[2]-b[2]);const[x,y,d]=q.shift();
-  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=x+dx,ny=y+dy;const c=ch(g,nx,ny);if(blocksMove(c))continue;
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=x+dx,ny=y+dy;const c=ch(g,nx,ny);if(!canStep(t,c))continue;if(ch(g,x,y)==="X")continue;
    if(dx&&dy&&blocksMove(ch(g,x+dx,y))&&blocksMove(ch(g,x,y+dy)))continue;
    const o=tokAt(nx,ny,t.id);if(o&&!o.down&&o.kind==="enemy"!==(t.kind==="enemy")&&!o.hidden)continue;
    const nd=d+(isDiff(c)?2:1);if(nd>lim)continue;const k=ny*W+nx;if(dist.has(k)&&dist.get(k)<=nd)continue;dist.set(k,nd);prev.set(k,y*W+x);q.push([nx,ny,nd])}}
@@ -252,17 +266,20 @@ const fmtM=n=>(Math.round(n*10)/10).toString().replace(".",",")+" m";
 function canEnd(t,x,y){const o=tokAt(x,y,t.id);return !o||o.down}
 function applyMove(id,x,y,byMaster){
  const t=tok(id);if(!t)return"Segnalino sconosciuto";
- if(byMaster){if(blocksMove(ch(S.grid,x,y)))return"Lì c'è un ostacolo";if(!canEnd(t,x,y))return"Casella occupata";t.x=x;t.y=y;return null}
+ if(byMaster){if(!canStep(t,ch(S.grid,x,y)))return"Lì c'è un ostacolo";if(!canEnd(t,x,y))return"Casella occupata";t.x=x;t.y=y;checkEscape(t);return null}
  if(!S.free&&S.turn!==id)return"Non è il tuo turno";
  const W=S.grid[0].length,d=reach(t).get(y*W+x);if(d==null)return"Troppo lontano";if(!canEnd(t,x,y))return"Qualcosa ti impedisce di entrare lì";
- if(!(S.free&&t.kind!=="enemy"))t.used+=d;t.x=x;t.y=y;return null;
+ if(!(S.free&&t.kind!=="enemy"))t.used+=d;t.x=x;t.y=y;checkEscape(t);return null;
 }
+function exitAt(x,y){return(S.exits||[]).find(e=>e.x===x&&e.y===y)}
+function checkEscape(t){const e=exitAt(t.x,t.y);if(!e||t.kind!=="enemy")return;t.escaped=e.n;t.reserve=true;t.x=-1;t.y=-1;if(S.turn===t.id)S.turn=null;if(ROLE==="master"){toast(t.name+" è fuggito dall'uscita "+e.n);setTimeout(()=>{renderBar();renderSide()},0)}}
+function exitFor(t){const ex=S.exits||[];if(!ex.length||t.kind!=="enemy")return null;const foes=S.tokens.filter(o=>o.kind==="enemy");const i=foes.indexOf(t);return ex[i%ex.length]}
 
 /* ================= RETE ================= */
 function setNet(t){$("#netStatus").textContent=t}
 function publicStateFor(role,meId){
  const s=JSON.parse(JSON.stringify(S));
- if(role!=="master"){s.tokens=s.tokens.filter(t=>!t.reserve&&(t.kind!=="enemy"||!t.hidden));delete s.cfg}
+ if(role!=="master"){s.tokens=s.tokens.filter(t=>!t.reserve&&(t.kind!=="enemy"||!t.hidden));delete s.cfg;s.exits=(s.exits||[]).filter(e=>e.found);s.grid=s.grid.map((r,y)=>[...r].map((c,x)=>c==="X"&&!s.exits.some(e=>e.x===x&&e.y===y)?"#":c).join(""))}
  return s;
 }
 function broadcast(){
@@ -297,6 +314,7 @@ function onMasterMsg(conn,m){
  if(m.t==="mod"){if(c.id!==m.id)return;const t=tok(m.id);if(t){t.mult=m.mult===2?2:1;t.bonus=Math.max(-30,Math.min(60,+m.bonus||0));broadcast();renderSide();draw()}return}
  if(m.t==="undo"){if(c.id!==m.id)return;const t=tok(m.id);if(t&&!S.free&&S.turn===t.id&&t.sx!=null){t.x=t.sx;t.y=t.sy;t.used=0;updateExplored();broadcast();renderSide();draw()}return}
  if(m.t==="hide"){if(c.id!==m.id)return;const t=tok(m.id);if(t){t.hidden=!t.hidden;broadcast();renderSide();draw();toast(t.name+(t.hidden?" si nasconde":" esce allo scoperto"))}return}
+ if(m.t==="torch"){if(c.id!==m.id)return;const t=tok(m.id);if(t){t.torch=!t.torch;updateExplored();broadcast();renderSide();draw();toast(t.name+(t.torch?" accende una torcia":" spegne la torcia"))}return}
  if(m.t==="endturn"){if(c.id===S.turn){nextTurn();}return}
 }
 function mergeEnemies(list){let added=0;(list||[]).forEach(e=>{const base=e.name;const have=S.tokens.filter(t=>t.name===base||t.name.replace(/\s\d+$/,"")===base).length;for(let k=have+1;k<=(e.n||1);k++){const t=mkTok(e.ally?"ally":"enemy",{name:(e.n>1?base+" "+k:base),color:e.ally?ALLY_COLOR:ENEMY_COLOR,speed:e.speed||9,dv:e.dv||18},[-1,-1],!e.ally);t.reserve=true;S.tokens.push(t);added++}});broadcast();renderSide();draw();return added}
@@ -324,7 +342,7 @@ function send(m){if(CONN&&CONN.open)CONN.send(m);else toast("Non collegato al ma
 function renderJoin(){
  if(!S){return}$("#joinWait").textContent="Scegli il tuo personaggio:";
  const pcs=S.tokens.filter(t=>t.kind==="pc");
- $("#joinPcs").innerHTML=pcs.length?pcs.map(t=>`<button data-claim="${t.id}" style="display:flex;align-items:center;gap:10px;text-align:left"><span class="dot" style="width:16px;height:16px;border-radius:50%;background:${t.color}"></span><span style="flex:1">${esc(t.name)}</span><small class="note">${t.speed} m${t.owner?" · già preso":""}</small></button>`).join(""):'<p class="note">Il master non ha dichiarato personaggi: creane uno qui sotto.</p>';
+ $("#joinPcs").innerHTML=pcs.length?'<p class="note">Il master ha preparato questi personaggi. Se il tuo non c\'è, crealo qui sotto.</p>'+pcs.map(t=>`<button data-claim="${t.id}" style="display:flex;align-items:center;gap:10px;text-align:left"><span class="dot" style="width:16px;height:16px;border-radius:50%;background:${t.color}"></span><span style="flex:1">${esc(t.name)}</span><small class="note">${t.speed} m${t.owner?" · già preso":""}</small></button>`).join(""):'<p class="note">Nessun personaggio preparato: crea il tuo qui sotto.</p>';
  document.querySelectorAll("[data-claim]").forEach(b=>b.onclick=()=>{const t=pcs.find(x=>x.id===b.dataset.claim);ls.set("mb-player-"+S.room,{id:t.id,name:t.name});send({t:"claim",id:t.id,name:t.name})});
 }
 $("#jnGo").onclick=()=>{const name=$("#jnName").value.trim();if(!name){$("#jnErr").textContent="Scrivi un nome.";return}$("#jnErr").textContent="";const pc={name,color:$("#jnColor").value,speed:+$("#jnSpeed").value||9,dv:+$("#jnDv").value||0};ls.set("mb-player-"+(S?S.room:""),{pc});send({t:"new",pc})};
@@ -346,7 +364,7 @@ function viewerVision(){
  vis.forEach(i=>exp.add(i));return{vis,exp};
 }
 function rnd(x,y,k){let h=(x*374761393+y*668265263+(k||0)*2147483647)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967295}
-const FLOOR=c=>".,PEord".includes(c);
+const FLOOR=c=>".,PEordL".includes(c);
 let PREVIEW=null; // {id,x,y,pts,cost}
 function cellBase(g,x,y,s){
  const c=g[y][x];const X=x*s,Y=y*s;const r1=rnd(x,y,1),r2=rnd(x,y,2);
@@ -356,6 +374,11 @@ function cellBase(g,x,y,s){
   if(c==="T"){const gr=ctx.createRadialGradient(X+s/2,Y+s*.7,1,X+s/2,Y+s*.7,s*1.6);gr.addColorStop(0,"rgba(255,190,90,.55)");gr.addColorStop(1,"rgba(255,190,90,0)");ctx.fillStyle=gr;ctx.fillRect(X-s,Y-s,s*3,s*3);ctx.fillStyle="#ffcf6e";ctx.beginPath();ctx.arc(X+s/2,Y+s*.65,s*.12,0,7);ctx.fill()}
   return}
  if(c==="w"){ctx.fillStyle=`hsl(185,${28+r1*8}%,${22+r2*4}%)`;ctx.fillRect(X,Y,s+.5,s+.5);ctx.strokeStyle="rgba(170,230,220,.25)";ctx.lineWidth=Math.max(1,s*.04);ctx.beginPath();const yy=Y+s*(.35+r1*.3);ctx.moveTo(X+s*.1,yy);ctx.quadraticCurveTo(X+s*.3,yy-s*.12,X+s*.5,yy);ctx.quadraticCurveTo(X+s*.7,yy+s*.12,X+s*.9,yy);ctx.stroke();return}
+ if(c==="X"){const e=exitAt(x,y);ctx.fillStyle=`hsl(25,10%,${12+r1*5}%)`;ctx.fillRect(X,Y,s+.5,s+.5);
+  const gr=ctx.createRadialGradient(X+s/2,Y+s/2,1,X+s/2,Y+s/2,s*.5);gr.addColorStop(0,"#000");gr.addColorStop(1,"rgba(0,0,0,.2)");ctx.fillStyle=gr;ctx.beginPath();ctx.ellipse(X+s/2,Y+s/2,s*.42,s*.34,0,0,7);ctx.fill();
+  ctx.strokeStyle=e&&e.found?"#ffcf6e":"rgba(255,207,110,.55)";ctx.lineWidth=Math.max(2,s*.07);if(!(e&&e.found))ctx.setLineDash([s*.1,s*.08]);ctx.beginPath();ctx.ellipse(X+s/2,Y+s/2,s*.42,s*.34,0,0,7);ctx.stroke();ctx.setLineDash([]);
+  if(e){ctx.fillStyle="#ffcf6e";ctx.font=`800 ${Math.max(11,s*.42)}px Alegreya Sans, sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(e.n),X+s/2,Y+s/2+1)}
+  return}
  // pavimento di pietra
  const dirt=c===",";ctx.fillStyle=dirt?`hsl(32,${22+r1*8}%,${38+r2*6}%)`:`hsl(35,${8+r1*6}%,${50+r2*9}%)`;ctx.fillRect(X,Y,s+.5,s+.5);
  ctx.strokeStyle="rgba(40,30,20,.22)";ctx.lineWidth=1;ctx.strokeRect(X+.5,Y+.5,s-1,s-1);
@@ -368,6 +391,7 @@ function cellBase(g,x,y,s){
  if(c==="r"){for(let k=0;k<4;k++){ctx.fillStyle="#c87533";ctx.beginPath();ctx.arc(X+s*(.25+rnd(x,y,k+40)*.5),Y+s*(.25+rnd(x,y,k+50)*.5),s*.07,0,7);ctx.fill()}}
  if(c==="D"){ctx.fillStyle="#6b4424";ctx.fillRect(X+s*.1,Y+s*.3,s*.8,s*.4);ctx.fillStyle="#d9b27a";ctx.fillRect(X+s*.7,Y+s*.45,s*.08,s*.1)}
  if(c==="d"){ctx.strokeStyle="#6b4424";ctx.lineWidth=2;ctx.strokeRect(X+3,Y+3,s-6,s-6)}
+ if(c==="L"){ctx.fillStyle="rgba(30,20,10,.35)";ctx.beginPath();ctx.ellipse(X+s/2,Y+s*.62,s*.26,s*.12,0,0,7);ctx.fill();ctx.fillStyle="#e8dcb8";ctx.fillRect(X+s*.42,Y+s*.32,s*.16,s*.32);ctx.strokeStyle="#333";ctx.lineWidth=Math.max(1,s*.04);ctx.beginPath();ctx.moveTo(X+s/2,Y+s*.32);ctx.lineTo(X+s/2,Y+s*.22);ctx.stroke()}
 }
 function drawProp(g,x,y,s){const c=g[y][x],X=x*s,Y=y*s;
  if(c==="c"){const left=ch(g,x-1,y)!=="c",top=ch(g,x,y-1)!=="c",right=ch(g,x+1,y)!=="c",bot=ch(g,x,y+1)!=="c";
@@ -395,6 +419,7 @@ function draw(){
  const vv=viewerVision();const fogOn=!S.revealAll;
  for(let y=0;y<H;y++)for(let x=0;x<W;x++)cellBase(g,x,y,s);
  for(let y=0;y<H;y++)for(let x=0;x<W;x++)drawProp(g,x,y,s);
+ if(ROLE==="master"){const st=tok(SEL);const ex=st&&!st.reserve&&exitFor(st);if(ex){ctx.setLineDash([s*.15,s*.1]);ctx.strokeStyle="rgba(255,207,110,.85)";ctx.lineWidth=Math.max(2,s*.06);ctx.beginPath();ctx.moveTo((st.x+.5)*s,(st.y+.5)*s);ctx.lineTo((ex.x+.5)*s,(ex.y+.5)*s);ctx.stroke();ctx.setLineDash([])}}
  if(ROLE==="master")for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=g[y][x];if(c==="P"||c==="E"){ctx.fillStyle=c==="P"?"rgba(79,195,161,.22)":"rgba(181,48,42,.2)";ctx.fillRect(x*s,y*s,s,s)}}
  // raggio di movimento
  const sel=tok(ROLE==="player"?ME:SEL);
@@ -420,6 +445,8 @@ function draw(){
   ctx.lineWidth=Math.max(2,s*.07);ctx.strokeStyle=t.id===S.turn?"#ffcf6e":(t.id===SEL||t.id===ME?"#ffffff":"rgba(0,0,0,.65)");ctx.stroke();
   if(t.hidden&&t.kind!=="enemy"){ctx.save();ctx.globalAlpha=1;ctx.setLineDash([s*.12,s*.08]);ctx.lineWidth=Math.max(2,s*.07);ctx.strokeStyle="#9fe3ff";ctx.beginPath();ctx.arc(cx,cy,r+s*.07,0,Math.PI*2);ctx.stroke();ctx.restore()}
   ctx.fillStyle="#fff";ctx.font=`800 ${Math.max(10,s*.34)}px Alegreya Sans, sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(label(t),cx,cy+1);
+  if(ROLE==="master"){const ex=exitFor(t);if(ex){const bx=cx+r*.75,by=cy-r*.75;ctx.fillStyle="#ffcf6e";ctx.beginPath();ctx.arc(bx,by,s*.17,0,7);ctx.fill();ctx.fillStyle="#1a1206";ctx.font=`800 ${Math.max(9,s*.22)}px Alegreya Sans, sans-serif`;ctx.fillText(String(ex.n),bx,by+1)}}
+  if(t.torch){ctx.fillStyle="#ffcf6e";ctx.beginPath();ctx.arc(cx-r*.75,cy-r*.75,s*.1,0,7);ctx.fill()}
   if(t.down){ctx.strokeStyle="#000";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx-r*.6,cy-r*.6);ctx.lineTo(cx+r*.6,cy+r*.6);ctx.moveTo(cx+r*.6,cy-r*.6);ctx.lineTo(cx-r*.6,cy+r*.6);ctx.stroke()}
   ctx.globalAlpha=1;
   if(s>34){ctx.font=`600 ${Math.max(10,s*.22)}px Alegreya Sans, sans-serif`;ctx.fillStyle="rgba(0,0,0,.75)";const nm=t.name+(t.hidden?" (nascosto)":"");const tw=ctx.measureText(nm).width+8;ctx.fillRect(cx-tw/2,cy+r+2,tw,s*.28);ctx.fillStyle="#fff";ctx.fillText(nm,cx,cy+r+2+s*.14)}
@@ -472,15 +499,16 @@ function renderSide(){
  ${S.free?'<div class="note">I giocatori si muovono quando vogliono, senza limite di metri.</div>':`<div class="row"><button class="pri" id="mNext">Turno successivo</button><span class="note">Di turno: <b>${cur?esc(cur.name):"nessuno"}</b></span></div><div class="note">Tocca un segnalino nella lista per dargli il turno. Il raggio si azzera a ogni nuovo turno.</div>`}
  <h3>Nebbia e porte</h3>
  <div class="row"><button id="mFog" class="${S.revealAll?"":"on"}">${S.revealAll?"Nebbia spenta":"Nebbia attiva"}</button><button id="mDoor" class="${EDIT==="door"?"on":""}">Apri/chiudi porte</button><button id="mResetFog">Azzera esplorato</button></div>
- ${sel?`<h3>Selezionato</h3><div class="card" style="padding:10px;gap:8px"><b>${esc(sel.name)}</b><div class="note">${sel.kind==="enemy"?"Nemico":sel.kind==="ally"?"Alleato":"Personaggio"}${sel.owner?" · "+esc(sel.owner):""} · velocità ${fmtM(turnSpeed(sel))}${sel.mult===2?" (×2)":""}${sel.bonus?" ("+(sel.bonus>0?"+":"")+fmtM(sel.bonus)+")":""} · usati ${fmtM(sel.used*M)}${sel.dash?" · Scatto":""}</div>
-  <div class="row"><button id="sHide" class="${sel.hidden?"on":""}">${sel.kind==="enemy"?(sel.hidden?"Nascosto: mostra ai giocatori":"Nascondi ai giocatori"):(sel.hidden?"Nascosto: esce allo scoperto":"Nascondi")}</button><button id="sTurn">Dai il turno</button><button id="sDash" class="${sel.dash?"on":""}">Scatto</button><button id="sDown">${sel.down?"Rialza":"A terra / morto"}</button><button class="dng" id="sDel">Togli</button></div>
+ ${S.exits&&S.exits.length?`<h3>Punti di fuga</h3><div class="note">Nascosti ai giocatori finché non li riveli (Saggezza (Percezione) CD 15). Ogni nemico corre verso il numero sul suo segnalino; arrivato lì, esce dalla mappa.</div><div class="row">${S.exits.map(e=>`<button data-exit="${e.n}" class="${e.found?"on":""}" title="${e.found?"Visibile ai giocatori: tocca per nasconderlo":"Nascosto: tocca per rivelarlo"}">${e.n} · ${e.found?"rivelato":"nascosto"}</button>`).join("")}<button id="mExitAll">Rivela tutti</button></div>${S.tokens.filter(t=>t.escaped).length?`<div class="note">Fuggiti: ${S.tokens.filter(t=>t.escaped).map(t=>`<b>${esc(t.name)}</b> (uscita ${t.escaped}) <button data-back="${t.id}">Riporta</button>`).join(" ")}</div>`:""}`:""}
+ ${sel?`<h3>Selezionato</h3><div class="card" style="padding:10px;gap:8px"><b>${esc(sel.name)}</b><div class="note">${sel.kind==="enemy"?"Nemico":sel.kind==="ally"?"Alleato":"Personaggio"}${sel.owner?" · "+esc(sel.owner):""} · velocità ${fmtM(turnSpeed(sel))}${sel.mult===2?" (×2)":""}${sel.bonus?" ("+(sel.bonus>0?"+":"")+fmtM(sel.bonus)+")":""} · usati ${fmtM(sel.used*M)}${sel.dash?" · Scatto":""}${exitFor(sel)?" · fugge verso l'uscita "+exitFor(sel).n:""}</div>
+  <div class="row"><button id="sHide" class="${sel.hidden?"on":""}">${sel.kind==="enemy"?(sel.hidden?"Nascosto: mostra ai giocatori":"Nascondi ai giocatori"):(sel.hidden?"Nascosto: esce allo scoperto":"Nascondi")}</button><button id="sTurn">Dai il turno</button><button id="sDash" class="${sel.dash?"on":""}">Scatto</button>${S.light!=="luce"?`<button id="sTorch" class="${sel.torch?"on":""}">Torcia</button>`:""}<button id="sDown">${sel.down?"Rialza":"A terra / morto"}</button><button class="dng" id="sDel">Togli</button></div>
   <div class="note">Tocca una casella della mappa per spostarlo.</div></div>`:'<div class="note">Tocca un segnalino sulla mappa per selezionarlo e spostarlo.</div>'}
- ${S.tokens.some(t=>t.reserve)?`<h3>In riserva</h3><div class="note">Entrano a metà scontro. Premi «Fai entrare», poi tocca la casella.</div>${S.tokens.filter(t=>t.reserve).map(t=>`<div class="row"><span class="dot" style="width:14px;height:14px;border-radius:50%;background:${t.color}"></span><b style="flex:1">${esc(t.name)}</b><button data-place="${t.id}" class="${EDIT==="place:"+t.id?"on":""}">${EDIT==="place:"+t.id?"Tocca la mappa…":"Fai entrare"}</button></div>`).join("")}`:""}
+ ${S.tokens.some(t=>t.reserve&&!t.escaped)?`<h3>In riserva</h3><div class="note">Entrano a metà scontro. Premi «Fai entrare», poi tocca la casella.</div>${S.tokens.filter(t=>t.reserve&&!t.escaped).map(t=>`<div class="row"><span class="dot" style="width:14px;height:14px;border-radius:50%;background:${t.color}"></span><b style="flex:1">${esc(t.name)}</b><button data-place="${t.id}" class="${EDIT==="place:"+t.id?"on":""}">${EDIT==="place:"+t.id?"Tocca la mappa…":"Fai entrare"}</button></div>`).join("")}`:""}
  <h3>Segnalini</h3>
  <div style="display:flex;flex-direction:column;gap:6px">${S.tokens.filter(t=>!t.reserve).map(t=>`<div class="tok ${t.id===SEL?"sel":""} ${t.id===S.turn?"cur":""}" data-id="${t.id}"><span class="dot" style="background:${t.color};opacity:${t.hidden?.45:1}"></span><b>${esc(t.name)}</b><small>${t.down?"a terra":t.hidden?(t.kind==="enemy"?"invisibile ai giocatori":"nascosto"):t.owner?esc(t.owner):""}</small></div>`).join("")}</div>
  <div class="row"><input id="mNewName" placeholder="Nuovo nemico" style="flex:1;min-width:120px"><input id="mNewN" type="number" min="1" value="1" aria-label="Quantità"><button id="mAdd">+ In riserva</button></div>
  <h3>Legenda</h3>
- <div class="legend"><i style="background:#2a2420"></i><span>Muro (con un punto giallo: torcia)</span><i style="background:#2f5a5c"></i><span>Acqua del canale: terreno difficile</span><i style="background:#5f6236"></i><span>Fango e macerie: terreno difficile</span><i style="background:#7a5530"></i><span>Carretto, barili, casse: bloccano il passo, non la vista</span><i style="background:#8e97a3"></i><span>Sporgenza rialzata (bordo scuro)</span><i style="background:#6b4424"></i><span>Porta</span></div>
+ <div class="legend"><i style="background:#2a2420"></i><span>Muro (con un punto giallo: torcia)</span><i style="background:#2f5a5c"></i><span>Acqua del canale: terreno difficile</span><i style="background:#5f6236"></i><span>Fango e macerie: terreno difficile</span><i style="background:#7a5530"></i><span>Carretto, barili, casse: bloccano il passo, non la vista</span><i style="background:#8e97a3"></i><span>Sporgenza rialzata (bordo scuro)</span><i style="background:#6b4424"></i><span>Porta</span>${S.exits&&S.exits.length?'<i style="background:#000;border-color:#ffcf6e;border-radius:50%"></i><span>Punto di fuga numerato (tratteggiato: ancora nascosto ai giocatori)</span>':""}</div>${S.light!=="luce"?'<div class="note">Mappa al buio: ognuno vede fino alla sua scurovisione; con la torcia accesa almeno 6 m.</div>':""}
  <div class="note">${esc(MAPS[S.mapId]?.note||"")}</div>
  <div class="row"><button class="dng" id="mEnd">Chiudi la battaglia</button></div>`;
  const on=(id,f)=>{const el=sd.querySelector("#"+id);if(el)el.onclick=f};
@@ -493,6 +521,10 @@ function renderSide(){
  on("sHide",()=>{sel.hidden=!sel.hidden;broadcast();renderSide();draw()});
  on("sTurn",()=>{giveTurn(sel.id)});on("sDash",()=>{sel.dash=!sel.dash;broadcast();renderSide();draw()});
  on("sDown",()=>{sel.down=!sel.down;broadcast();renderSide();draw()});
+ on("sTorch",()=>{sel.torch=!sel.torch;updateExplored();broadcast();renderSide();draw()});
+ on("mExitAll",()=>{S.exits.forEach(e=>e.found=true);broadcast();renderSide();draw();toast("Punti di fuga rivelati")});
+ sd.querySelectorAll("[data-exit]").forEach(b=>b.onclick=()=>{const e=S.exits.find(x=>x.n===+b.dataset.exit);e.found=!e.found;broadcast();renderSide();draw();toast("Uscita "+e.n+(e.found?" rivelata ai giocatori":" di nuovo nascosta"))});
+ sd.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>{const t=tok(b.dataset.back);if(t){t.escaped=null;EDIT="place:"+t.id;renderSide();toast("Tocca la casella dove rimetterlo")}});
  on("sDel",()=>{S.tokens=S.tokens.filter(t=>t.id!==sel.id);SEL=null;if(S.turn===sel.id)S.turn=null;broadcast();renderSide();draw()});
  on("mAdd",()=>{const n=$("#mNewName").value.trim();if(!n){toast("Scrivi un nome");return}const q=Math.max(1,+$("#mNewN").value||1);const c=mergeEnemies([{name:n,n:q+S.tokens.filter(t=>t.name===n||t.name.replace(/\s\d+$/,"")===n).length}]);toast(c+" in riserva")});
  on("mEnd",()=>{if(on.armed){ls.set("mb-master",null);location.href=location.pathname}else{on.armed=true;sd.querySelector("#mEnd").textContent="Conferma: chiudi"}});
@@ -513,11 +545,11 @@ const me=tok(ME);if(!me){b.innerHTML='<div class="info">In attesa…</div>';retu
  const mod=(me.mult===2?"×2 ":"")+(me.bonus?((me.bonus>0?"+":"")+fmtM(me.bonus)):"");
  b.innerHTML=`<div class="info"><b style="color:${me.color}">${esc(me.name)}</b> · ${S.free?"esplorazione libera, nessun limite":myTurn?`velocità <b>${fmtM(turnSpeed(me)*(me.dash?2:1))}</b>${mod||me.dash?` <small class="note">(${[mod.trim(),me.dash?"Scatto":""].filter(Boolean).join(", ")})</small>`:""} · restano <b>${fmtM(left*M)}</b>`:`turno di ${esc(tok(S.turn)?.name||"—")}`}</div>
  ${!S.free&&myTurn?`<button id="bDash" class="${me.dash?"on":""}">Scatto</button><button id="bX2" class="${me.mult===2?"on":""}" title="Velocità raddoppiata, per esempio con l'incantesimo Velocità">×2</button><button id="bMinus" aria-label="Velocità meno 1,5 metri">−1,5</button><button id="bPlus" aria-label="Velocità più 1,5 metri">+1,5</button>${me.used?'<button id="bUndo">Annulla movimento</button>':""}<button class="pri" id="bEnd">Fine turno</button>`:""}
- <button id="bHide" class="${me.hidden?"on":""}">${me.hidden?"Nascosto · esci":"Nasconditi"}</button><button id="bCenter">Centra</button>`;
+ ${S.light!=="luce"?`<button id="bTorch" class="${me.torch?"on":""}">${me.torch?"Torcia accesa":"Accendi torcia"}</button>`:""}<button id="bHide" class="${me.hidden?"on":""}">${me.hidden?"Nascosto · esci":"Nasconditi"}</button><button id="bCenter">Centra</button>`;
  const on=(id,f)=>{const el=b.querySelector("#"+id);if(el)el.onclick=f};
  on("bDash",()=>send({t:"dash",id:ME}));on("bHide",()=>send({t:"hide",id:ME}));on("bEnd",()=>send({t:"endturn"}));on("bCenter",()=>{VIEW.follow=true;draw()});
  on("bX2",()=>send({t:"mod",id:ME,mult:me.mult===2?1:2,bonus:me.bonus||0}));on("bMinus",()=>send({t:"mod",id:ME,mult:me.mult||1,bonus:(me.bonus||0)-1.5}));on("bPlus",()=>send({t:"mod",id:ME,mult:me.mult||1,bonus:(me.bonus||0)+1.5}));
- on("bUndo",()=>send({t:"undo",id:ME}));
+ on("bUndo",()=>send({t:"undo",id:ME}));on("bTorch",()=>send({t:"torch",id:ME}));
 }
 $("#sideToggle").onclick=()=>$("#side").classList.toggle("closed");
 
@@ -529,14 +561,14 @@ $("#qrClose").onclick=()=>$("#qrModal").hidden=true;
 /* ================= SETUP MASTER ================= */
 let SETUP=null;
 function openSetup(cfg){
- SETUP={combat:!!(cfg.enemies&&cfg.enemies.length),map:cfg.map&&MAPS[cfg.map]?cfg.map:"n6",title:cfg.title||"",pcs:cfg.pcs||ls.get("mb-party",DEFAULT_PCS),enemies:cfg.enemies||[]};
+ SETUP={combat:!!(cfg.enemies&&cfg.enemies.length),map:cfg.map&&MAPS[cfg.map]?cfg.map:"n6",title:cfg.title||"",pcs:(cfg.pcs||[]).map(p=>({...p})),enemies:cfg.enemies||[]};
  show("#scrSetup");$("#setupTitle").textContent=cfg.title?"Prepara: "+cfg.title:"Prepara la battaglia";
  $("#setMap").innerHTML=Object.entries(MAPS).map(([k,m])=>`<option value="${k}" ${k===SETUP.map?"selected":""}>${esc(m.name)}</option>`).join("");
  $("#setMap").onchange=()=>{SETUP.map=$("#setMap").value;renderSetup()};renderSetup();
 }
 function renderSetup(){
  $("#setMapNote").textContent=MAPS[SETUP.map].note||"";
- $("#setPcs").innerHTML=SETUP.pcs.map((p,i)=>`<div class="pcrow"><input type="color" value="${p.color}" data-i="${i}" data-f="color" aria-label="Colore"><input value="${esc(p.name)}" data-i="${i}" data-f="name" aria-label="Nome"><input type="number" step="1.5" value="${p.speed}" data-i="${i}" data-f="speed" aria-label="Velocità"><input type="number" step="3" value="${p.dv}" data-i="${i}" data-f="dv" aria-label="Scurovisione"><button data-del="${i}" aria-label="Togli">✕</button></div>`).join("");
+ $("#setPcs").innerHTML=(SETUP.pcs.length?"":'<p class="note">Nessun personaggio preparato: i giocatori se lo creano quando entrano dal telefono.</p>')+SETUP.pcs.map((p,i)=>`<div class="pcrow"><input type="color" value="${p.color}" data-i="${i}" data-f="color" aria-label="Colore"><input value="${esc(p.name)}" data-i="${i}" data-f="name" aria-label="Nome"><input type="number" step="1.5" value="${p.speed}" data-i="${i}" data-f="speed" aria-label="Velocità"><input type="number" step="3" value="${p.dv}" data-i="${i}" data-f="dv" aria-label="Scurovisione"><button data-del="${i}" aria-label="Togli">✕</button></div>`).join("");
  $("#setPcs").querySelectorAll("input").forEach(el=>el.oninput=()=>{const p=SETUP.pcs[el.dataset.i];p[el.dataset.f]=el.type==="number"?+el.value:el.value});
  $("#setPcs").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{SETUP.pcs.splice(+b.dataset.del,1);renderSetup()});
  $("#setEnemies").innerHTML=SETUP.enemies.length?SETUP.enemies.map((e,i)=>`<div class="row"><span style="flex:1">${esc(e.name)}${e.ally?' <small class="note">alleato</small>':""}</span><button data-res="${i}" class="${e.reserve?"on":""}" title="Entra a metà scontro">${e.reserve?"In riserva":"In campo"}</button><input type="number" min="0" value="${e.n||1}" data-ei="${i}" aria-label="Quantità di ${esc(e.name)}"><button data-edel="${i}" aria-label="Togli">✕</button></div>`).join(""):'<p class="note">Nessun nemico: aggiungili qui o dalla mappa.</p>';
@@ -546,7 +578,7 @@ function renderSetup(){
 }
 $("#addPc").onclick=()=>{SETUP.pcs.push({name:"Nuovo PG",color:"#"+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,"0"),speed:9,dv:0});renderSetup()};
 $("#addEn").onclick=()=>{const n=$("#newEnName").value.trim();if(!n){$("#setupErr").textContent="Scrivi il nome del nemico.";return}$("#setupErr").textContent="";SETUP.enemies.push({name:n,n:+$("#newEnN").value||1});$("#newEnName").value="";renderSetup()};
-$("#createRoom").onclick=()=>{const pcs=SETUP.pcs.filter(p=>p.name.trim());ls.set("mb-party",pcs);const st=newState({room:roomCode(),map:SETUP.map,title:SETUP.title,pcs,enemies:SETUP.enemies.filter(e=>e.n>0),combat:SETUP.combat});history.replaceState(null,"",location.pathname+"?master="+encodeURIComponent(st.room));startMaster(st)};
+$("#createRoom").onclick=()=>{const pcs=SETUP.pcs.filter(p=>p.name.trim());const st=newState({room:roomCode(),map:SETUP.map,title:SETUP.title,pcs,enemies:SETUP.enemies.filter(e=>e.n>0),combat:SETUP.combat});history.replaceState(null,"",location.pathname+"?master="+encodeURIComponent(st.room));startMaster(st)};
 
 function offerMerge(cfg,info,MB){show("#scrHome");$("#scrHome .box").innerHTML=`<div class="card"><h2>C'è una battaglia in corso</h2><p>«${esc(info.title)}», stanza <b>${esc(info.room)}</b>, è aperta in un'altra scheda.</p><p class="note">Posso aggiungere i nemici che mancano, in riserva, senza toccare il resto.</p><div class="row"><button class="pri" id="doMerge">Aggiungi alla battaglia in corso</button><button id="doNew">Nuova battaglia</button></div><div class="note" id="mergeOut"></div></div>`;
  $("#doMerge").onclick=()=>MB.postMessage({t:"merge",room:info.room,enemies:cfg.enemies||[]});$("#doNew").onclick=()=>openSetup(cfg)}
