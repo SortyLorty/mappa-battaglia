@@ -154,16 +154,16 @@ canvas{display:block;width:100%;height:100%}
    D porta chiusa · d porta aperta · P partenza PG · E partenza nemici
    X punto di fuga (solo i nemici ci entrano; i giocatori lo vedono solo se il master lo rivela) · L candela */
 const MAPS={
- n6:{name:"Nodo 6 · La galleria dei portatori",light:"luce",note:"Galleria di fogna illuminata da torce. A sud scorre il canale (terreno difficile). Il carretto di rame al centro dà mezza copertura; i fiondatori stanno sulla sporgenza a nord-est. Con l'allarme della campana i nemici partono pronti.",rows:[
+ n6:{name:"Nodo 6 · La galleria dei portatori",light:"luce",note:"Galleria di fogna illuminata da torce. A sud scorre il canale (terreno difficile). Sgnik parte davanti, a ovest del carretto, per il suo discorso; i guerrieri sono schierati su due file dietro di lui, i ratti sui fianchi, le Zanne Nere più indietro a controllarlo. Il carretto di rame dà mezza copertura; i fiondatori stanno sulla sporgenza a nord-est. Con l'allarme della campana i nemici partono pronti.",spawns:[[/sgnik|capo/i,[[15,5]]],[/fiond/i,[[26,3],[28,3],[27,2],[29,2]]],[/ratt|sciame/i,[[16,2],[16,8],[21,2],[21,8]]],[/zanna/i,[[24,4],[24,6],[25,8]]],[/guerr/i,[[17,5],[17,4],[17,6],[17,3],[17,7],[21,5],[21,4],[21,6],[21,3],[21,7]]]],rows:[
  "################################",
  "######T#######,,,,,,##T#########",
  "####.......,,......bb.....hhhhh#",
  "PP.....,......r..........hhhhhh#",
- "PP......####......cc..r..EEhhh..",
- "PP......####..o...cc....EEEE....",
- "PP......####......cck...EEEE....",
- "PP........,....r......EEEE......",
- "###..,......xx..........EE...b.#",
+ "PP......####......cc..r....hhh.E",
+ "PP......####..o...cc...........E",
+ "PP......####......cck..........E",
+ "PP........,....r...............E",
+ "###..,......xx...............b.#",
  "####wwwwwwwwwwwwwwwwwwwwwwwwwww#",
  "####wwwwwwwwwwwwwwwwwwwwwwwwwww#",
  "#####..x.....,..o..T#####..b####",
@@ -221,7 +221,8 @@ function newState(cfg){
  g.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==="X")st.exits.push({n:st.exits.length+1,x,y,found:false})}));
  const spP=[],spE=[];g.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==="P")spP.push([x,y]);if(c==="E")spE.push([x,y])}));
  let i=0;(cfg.pcs||[]).forEach(p=>{const s=spP[i++%Math.max(1,spP.length)]||[1,1];st.tokens.push(mkTok("pc",p,s))});
- let j=0;(cfg.enemies||[]).forEach(e=>{for(let k=1;k<=(e.n||1);k++){const s=e.reserve?[-1,-1]:(spE[j++%Math.max(1,spE.length)]||[g[0].length-2,1]);const t=mkTok(e.ally?"ally":"enemy",{name:(e.n>1?e.name+" "+k:e.name),color:e.ally?ALLY_COLOR:ENEMY_COLOR,speed:e.speed||9,dv:e.dv||18},s,!e.ally);if(e.reserve)t.reserve=true;st.tokens.push(t)}});
+ let j=0;const taken=new Set();const roleSpot=name=>{for(const[re,cells]of(m.spawns||[])){if(!re.test(name))continue;for(const[x,y]of cells){const k=x+","+y;if(!taken.has(k)){taken.add(k);return[x,y]}}}return null};
+ (cfg.enemies||[]).forEach(e=>{for(let k=1;k<=(e.n||1);k++){let s=e.reserve?[-1,-1]:roleSpot(e.name);if(!s){do{s=spE[j++%Math.max(1,spE.length)]||[g[0].length-2,1]}while(taken.has(s[0]+","+s[1])&&j<spE.length*2);taken.add(s[0]+","+s[1])}const t=mkTok(e.ally?"ally":"enemy",{name:(e.n>1?e.name+" "+k:e.name),color:e.ally?ALLY_COLOR:ENEMY_COLOR,speed:e.speed||9,dv:e.dv||18},s,!e.ally);if(e.reserve)t.reserve=true;st.tokens.push(t)}});
  return st;
 }
 let UID=1;
@@ -409,7 +410,7 @@ function viewerVision(){
  ids.forEach(id=>(S.explored[id]||[]).forEach(i=>exp.add(i)));
  vis.forEach(i=>exp.add(i));return{vis,exp};
 }
-function label(t){const num=(t.name.match(/\s(\d+)$/)||[])[1];const words=t.name.replace(/\s\d+$/,"").split(/[\s-]+/).filter(Boolean);return num?words[0][0].toUpperCase()+num:words.slice(0,2).map(w=>w[0]).join("").toUpperCase()}
+function label(t){const num=(t.name.match(/\s(\d+)$/)||[])[1];let words=t.name.replace(/\s\d+$/,"").split(/[\s-]+/).filter(Boolean);const stop=words.findIndex((w,i)=>i>0&&/^(il|lo|la|le|i|gli|di|del|della|dei|da|the|of)$/i.test(w));if(stop>0)words=words.slice(0,stop);if(num)return words[0][0].toUpperCase()+num;return words.length===1?words[0].slice(0,2).toUpperCase():words.slice(0,2).map(w=>w[0]).join("").toUpperCase()}
 function pill(txt,cx,cy,s,bg){ctx.font=`700 ${Math.max(12,s*.32)}px Alegreya Sans, sans-serif`;const w=ctx.measureText(txt).width+12,h=Math.max(18,s*.46);ctx.fillStyle=bg||"rgba(10,14,13,.88)";ctx.beginPath();ctx.roundRect?ctx.roundRect(cx-w/2,cy-h/2,w,h,h/2):ctx.rect(cx-w/2,cy-h/2,w,h);ctx.fill();ctx.fillStyle="#fff";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(txt,cx,cy+1)}
 function draw(){
  if(!S||$("#scrMap").hidden)return;if(!VIEW.fitted)fit();if(ROLE!=="master")followActive();
