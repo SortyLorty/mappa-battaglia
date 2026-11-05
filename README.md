@@ -20,4 +20,17 @@ Le caselle `X` sono buchi nel muro. Solo i nemici possono entrarci: chi ci arriv
 - Atto 4 · Il Pozzo e la Macchina
 - Stanza vuota 20×14
 
+L'Esame di Rango C (Torre Sommersa di Verdaluce):
+
+- Esame · Atto 1 · La carovana (bosco, alleati da proteggere)
+- Esame · Atto 2 · L'Atrio degli Eroi (sala rotonda con le statue)
+- Esame · Atto 2 · La Sala dei Forzieri (mimic sulla pedana)
+- Esame · Atto 2 · Il Ponte sull'Abisso (voragine)
+- Esame · Atto 3 · Il Nucleo di Smeraldo (lago, Virydrax in riserva)
+- Esame · Atto 3 · Le rovine (variante se il dungeon esplode)
+
 Ogni mappa può definire `spawns` (posizioni di partenza per ruolo, in base al nome del nemico) e `marks` (etichette; quelle «solo master» sono viola).
+
+## Caselle per esterni e voragini
+
+Aggiunte per l'Esame, non cambiano le mappe precedenti: `q` erba, `f` sottobosco (terreno difficile), `A` albero (blocca passo e vista), `v` voragine (blocca il passo a PG e alleati; i nemici, che lì sono tutti volanti, possono sorvolarla), `N` gemma del Nucleo (blocca passo e vista).

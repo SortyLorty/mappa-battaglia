@@ -154,7 +154,9 @@ canvas{display:block;width:100%;height:100%}
    D porta chiusa · d porta aperta · P partenza PG · E partenza nemici
    = sbarre (bloccano il passo, non la vista) · g gabbia coperta · M macchina o palco (bloccano tutto)
    spawns: [regex nome, [[x,y]…]] posizioni di partenza per ruolo · marks: [x,y,testo,soloMaster] etichette
-   X punto di fuga (solo i nemici ci entrano; i giocatori lo vedono solo se il master lo rivela) · L candela */
+   X punto di fuga (solo i nemici ci entrano; i giocatori lo vedono solo se il master lo rivela) · L candela
+   q erba · f sottobosco e felci (terreno difficile) · A albero (blocca passo e vista)
+   v voragine (blocca il passo a PG e alleati; i nemici volanti la sorvolano) · N gemma del Nucleo (blocca passo e vista) */
 const MAPS={
  n6:{name:"Nodo 6 · La galleria dei portatori",light:"luce",note:"Galleria di fogna illuminata da torce. A sud scorre il canale (terreno difficile). Sgnik parte davanti, a ovest del carretto, per il suo discorso; i guerrieri sono schierati su due file dietro di lui, i ratti sui fianchi, le Zanne Nere più indietro a controllarlo. Il carretto di rame dà mezza copertura; i fiondatori stanno sulla sporgenza a nord-est. Con l'allarme della campana i nemici partono pronti.",spawns:[[/sgnik|capo/i,[[15,5]]],[/fiond/i,[[26,3],[28,3],[27,2],[29,2]]],[/ratt|sciame/i,[[16,2],[16,8],[21,2],[21,8]]],[/zanna/i,[[24,4],[24,6],[25,8]]],[/guerr/i,[[17,5],[17,4],[17,6],[17,3],[17,7],[21,5],[21,4],[21,6],[21,3],[21,7]]]],rows:[
  "################################",
@@ -267,6 +269,120 @@ const MAPS={
  "##########....##########",
  "##########PPPP##########",
  "##########PPPP##########"]},
+ /* ---- L'Esame di Rango C (Torre Sommersa di Verdaluce) ---- */
+ carovana:{name:"Esame · Atto 1 · La carovana",light:"luce",note:"Strada nel Bosco di Verdaluce, in pieno giorno. I PG arrivano da ovest, dalla curva. Tre carri di spezie fermi; Ottavio e i carrettieri sono alleati da proteggere. Gli hobgoblin assaltano i carri con il capitano in mezzo (Tattica del branco). I bugbear partono nascosti tra gli alberi alle spalle dei PG: rivelali quando attaccano. Il worg trascina un carrettiere verso il bosco a sud. Gli alberi bloccano passo e vista, il sottobosco è terreno difficile. Sotto metà forze i superstiti fuggono a est, verso la torre.",spawns:[[/capitano/i,[[21, 7]]],[/predatore/i,[[6, 3]]],[/bugbear/i,[[9, 12], [4, 2], [12, 13]]],[/worg/i,[[17, 11], [25, 12]]],[/hobgoblin/i,[[16, 7], [15, 9], [22, 9], [20, 6], [27, 8], [11, 8]]],[/ottavio/i,[[17, 7]]],[/carrett/i,[[17, 12], [13, 8], [24, 8], [22, 6]]]],marks:[[13,6,"Carro di spezie"],[19,9,"Carro di spezie"],[25,6,"Carro di spezie"],[2,5,"Da Velmora"],[29,5,"Verso la torre"],[6,2,"Bugbear in agguato",1]],rows:[
+ "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+ "AAfAqfAAfqAAfAAqqAAfAAqfAAfAqAAA",
+ "Afqqffqqqfqqqqfqfqqqfqqqqqfqqfqf",
+ "AqfqqAqqqffqqfqAqqqfqqfAqfqqqAqq",
+ "qqfqqqqqfqqAqqqqqqfqqqqqqqfqqqqq",
+ "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+ "PP,,,,,,,,,,ccc,,,,,,,,,ccc,,,,E",
+ "PP,,,,,,,,b,ccc,,,,,,,,,ccc,,,,E",
+ "PP,,,,,,,,,,,,,,,,ccc,,,,,,,,,,E",
+ "PP,,,,,,,,,,,,,,,,ccc,,,b,,,,,,E",
+ "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+ "qqfqqqqqqfqqqqqqqqqqfqqqqqfqqqqq",
+ "AqqqfqqqqqqfqqAqqqqqqqqfqqqqAqfq",
+ "AAqfqAqqfqqqqqqqfqAqqfqqqAqfqqqA",
+ "AAAqAAfAqAAqfAAAqAAfqAAAAqAAfAAA",
+ "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"]},
+ atrio:{name:"Esame · Atto 2 · L'Atrio degli Eroi",light:"luce",note:"Sala rotonda illuminata dalle radici. Sette statue in cerchio, dalla più piccola (F, a sud-ovest) alla più grande (S, a sud-est). La porta a nord ha sette fessure. Le armature animate sono statue minori: partono nascoste accanto ai piedistalli e si animano solo se l'enigma fallisce o se sfondano la porta (CA 17, 60 PF).",spawns:[[/armatura/i,[[7, 10], [16, 10], [12, 5], [8, 13], [15, 13], [8, 7], [15, 7]]]],marks:[[6,14,"Statua F"],[5,10,"Statua E"],[7,5,"Statua D"],[12,3,"Statua C"],[16,5,"Statua B"],[18,10,"Statua A"],[17,14,"Statua S"],[12,2,"Porta · 7 fessure"],[18,11,"Nicchia A: serratura",1]],rows:[
+ "########################",
+ "##########.DD.##########",
+ "#######..........#######",
+ "######......#.....######",
+ "#####.x............#####",
+ "####...#........#x..####",
+ "####................####",
+ "###..................###",
+ "###..................###",
+ "###..................###",
+ "###..#............#..###",
+ "###..................###",
+ "###..................###",
+ "###........o.........###",
+ "####..#..........#..####",
+ "####.x............x.####",
+ "#####..............#####",
+ "######............######",
+ "#######..........#######",
+ "##########....##########",
+ "##########PPPP##########",
+ "##########PPPP##########"]},
+ forzieri:{name:"Esame · Atto 2 · La Sala dei Forzieri",light:"luce",note:"Salone di banchetti lungo e stretto. Tavoli rovesciati (bloccano il passo, non la vista). In fondo, sulla pedana dorata, i forzieri: i mimic partono nascosti al loro posto, il forziere vero con la trappola è segnato in viola. Con meno mimic, le posizioni rimaste sulla pedana sono vuote.",spawns:[[/mimic/i,[[24, 2], [24, 8], [24, 6], [24, 9]]]],marks:[[24,4,"Forziere vero (trappola)",1],[24,5,"Pedana dorata"],[14,2,"Tavoli rovesciati"],[1,2,"Ingresso"]],rows:[
+ "############################",
+ "#####T######T######T########",
+ "#.....o.........k.....hhhhh#",
+ "PP..kk.......k........hhhhh#",
+ "PP.......k.......o....hhkhh#",
+ "PP.......k...kk.......hhhhh#",
+ "PP..kk...........k....hhhhh#",
+ "#........o...k........hhhhh#",
+ "#.....k...............hhhhh#",
+ "#......o.....k.....o..hhhhh#",
+ "#####T######T######T########",
+ "############################",
+ "############################"]},
+ ponte:{name:"Esame · Atto 2 · Il Ponte sull'Abisso",light:"luce",note:"Ponte di pietra largo 3 m (2 caselle) senza parapetto. La voragine blocca il passo a PG e alleati; chimera e gargoyle volano e possono sorvolarla. Chi cade oltre il bordo: TS Des 15 per aggrapparsi, poi 10d6. Cedric (8 PF) e Brina (a terra, 0 PF) sono a metà ponte, la chimera davanti a loro. I gargoyle partono nascosti sulle sporgenze delle pareti: rivelali quando qualcuno arriva a metà ponte.",spawns:[[/chimera/i,[[18, 7]]],[/gargoyle/i,[[13, 2], [17, 13], [12, 1]]],[/cedric/i,[[15, 7]]],[/brina/i,[[14, 8]]]],marks:[[9,3,"Voragine · 10d6"],[9,12,"Voragine · 10d6"],[8,8,"Ponte largo 3 m, senza parapetto"],[28,5,"Verso la Zona Sicura"],[13,1,"Statue di gargoyle"],[17,14,"Statue di gargoyle"]],rows:[
+ "##############################",
+ "#####vvvvvvvhhhvvvvvvvvvvvv###",
+ "#####vvvvvvvvhvvvvvvvvvvvvv###",
+ "#####vvvvvvvvvvvvvvvvvvvvvv###",
+ "#######vvvvvvvvvvvvvvvvvvvv###",
+ ".....vvvvvvvvvvvvvvvvvvvvvv...",
+ "PP...vvvvvvvvvvvvvvvvvvvvvv...",
+ "PP...........................E",
+ "PP...........................E",
+ "PP...vvvvvvvvvvvvvvvvvvvvvv...",
+ ".....vvvvvvvvvvvvvvvvvvvvvv...",
+ "#####vvvvvvvvvvvvvvvvvvvv#####",
+ "#####vvvvvvvvvvvvvvvvvvvvvv###",
+ "#####vvvvvvvvvvvvhvvvvvvvvv###",
+ "#####vvvvvvvvvvvhhhvvvvvvvv###",
+ "##############################"]},
+ nucleo:{name:"Esame · Atto 3 · Il Nucleo di Smeraldo",light:"luce",note:"Caverna allagata, illuminata dal Nucleo. Tutto il lago è terreno difficile (1 m vicino alle rive, 6 m al centro: si nuota). Il Nucleo blocca il passo: per stabilizzarlo serve stargli accanto. Syl è sull'isolotto davanti alla gemma, i fanatici con lei. Virydrax è in riserva: fallo entrare all'inizio del round 3 (round 2 con giocatori esperti) o quando Syl scende sotto metà PF, dal punto viola.",spawns:[[/syl/i,[[14, 12]]],[/fanatic/i,[[16, 12], [15, 13]]],[/virydrax/i,[[12, 6]]]],marks:[[15,8,"Nucleo di Smeraldo"],[15,13,"Isolotto di Syl"],[9,7,"Isolotto"],[20,7,"Isolotto"],[19,10,"Acqua profonda 6 m"],[5,13,"Riva: acqua 1 m"],[2,8,"Pilastro di radici"],[12,5,"Qui emerge Virydrax",1],[22,16,"Tesoro sul fondo",1]],rows:[
+ "##############################",
+ "#######....######....#########",
+ "####.....w.wwwwwww......######",
+ "###...wwwwwwwwwwwwwwww....####",
+ "##...wwwwwwwwwwwwwwwwwww...###",
+ "##..wwwwwwwwwwwwwwwwwwwww...##",
+ "#..wwwwwwwwwwwwwwwwwwwwwww..##",
+ "#..wwwwww..wwwwwwww..wwwww...#",
+ "#.#wwwwww..wwww.wwww..wwwww..#",
+ "#..wwwwwwwwwww.N.wwwwwwwwww..#",
+ "#..wwwwwwwwwwww.wwwwwwwwwww.##",
+ "##.wwwwwwwwwwwwwwwwwwwwwwww..#",
+ "#..wwwwwwwwww....wwwwwwwww.#.#",
+ "#...wwwwwwwww....wwwwwwww....#",
+ "##..wwwwwwwwwww.wwwwwwwww...##",
+ "###..wwwwwwwwwwwwwwwwwww...###",
+ "###...wwwwwwwwwwwwwwwww....###",
+ "####....wwwwwwwwwwwww.....####",
+ "#####.......wwwwww.......#####",
+ "#######.........#......#######",
+ "############PPPP##############",
+ "############PPPP##############"]},
+ rovine:{name:"Esame · Atto 3 · Le rovine (dungeon esploso)",light:"luce",note:"La torre è crollata: si combatte all'aperto, al tramonto, intorno al cratere del Nucleo. Virydrax non ha il lago in cui immergersi. Syl è nel cratere con i fanatici; Virydrax è in riserva come nella caverna. Le ondate di hobgoblin e worg sono in riserva: falle entrare dai bordi nord ed est al round 2 e al round 4.",spawns:[[/syl/i,[[14, 10]]],[/fanatic/i,[[12, 10], [16, 10]]],[/virydrax/i,[[14, 5]]]],marks:[[14,7,"Nucleo nel cratere"],[12,5,"Macerie della torre"],[2,2,"Ondate da nord e da est",1],[14,14,"Da Velmora"]],rows:[
+ "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+ "AAqfqAAqqfAAqqqqAAfqqAAqfqAAAA",
+ "AqqqfqqqqqqqqfqqqqqqqqqqqqfqqA",
+ "Afqq,,,,xx,,,,,,,,,xx,,,,,qqqA",
+ "Aqq,,,xxx,,,,,,,,,,,,xx,,,,qfq",
+ "Aqq,,xx,,,,,#,,,#,,,,,,x,,,qqq",
+ "Afq,,,,,,,,,,,,,,,,,,,,,,,,qqA",
+ "Aqq,,x,,,,,,,xxx,,,,,,,x,,,qfA",
+ "Aqq,,,,,,#,,xxNxx,,#,,,,,,,qqA",
+ "Aqq,,,,,,,,,,xxx,,,,,,,,x,,qqA",
+ "Afq,,x,,,,,,,,,,,,,,,,,,,,,qfA",
+ "Aqq,,,xx,,,,#,,,,,#,,,,xx,,qqA",
+ "Aqq,,,,,,,,,,,,,,,,,,,,,,,,qqA",
+ "AqqqfqqqqqqqqqqqqqqqqqqqqqfqqA",
+ "AAfqqqAqqqqq,,,,,,qqqqAqqfqAAA",
+ "AAAqAAAAqqqq,PPP,,qqqAAAAqAAAA",
+ "AAAAAAAAAAAA,PPP,,AAAAAAAAAAAA",
+ "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"]},
  vuota:{name:"Stanza vuota 20×14",light:"luce",note:"Per battaglie improvvisate.",rows:(()=>{const r=[];for(let y=0;y<14;y++){let s="";for(let x=0;x<20;x++){const edge=y===0||y===13||x===0||x===19;s+=edge?"#":(x<=2&&y>=5&&y<=8?"P":(x>=16&&y>=5&&y<=8?"E":"."))}r.push(s)}return r})()}
 };
 const DEFAULT_PCS=[];
@@ -283,10 +399,10 @@ function roomCode(){const w=["RATTO","LAMA","TORRE","LUNA","FOGNA","ZANNA","RAME
 function show(id){["#scrHome","#scrSetup","#scrJoin","#scrMap"].forEach(s=>$(s).hidden=s!==id);$("#bar").hidden=id!=="#scrMap"}
 const isCell=(g,x,y)=>y>=0&&y<g.length&&x>=0&&x<g[0].length;
 const ch=(g,x,y)=>isCell(g,x,y)?g[y][x]:"#";
-const blocksSight=c=>c==="#"||c==="D"||c==="T"||c==="X"||c==="g"||c==="M";
-const blocksMove=c=>c==="#"||c==="D"||c==="T"||c==="c"||c==="b"||c==="k"||c==="X"||c==="="||c==="g"||c==="M";
-const canStep=(t,c)=>!blocksMove(c)||(c==="X"&&t.kind==="enemy");
-const isDiff=c=>c==="~"||c==="w"||c==="x";
+const blocksSight=c=>c==="#"||c==="D"||c==="T"||c==="X"||c==="g"||c==="M"||c==="A"||c==="N";
+const blocksMove=c=>c==="#"||c==="D"||c==="T"||c==="c"||c==="b"||c==="k"||c==="X"||c==="="||c==="g"||c==="M"||c==="A"||c==="v"||c==="N";
+const canStep=(t,c)=>!blocksMove(c)||((c==="X"||c==="v")&&t.kind==="enemy");
+const isDiff=c=>c==="~"||c==="w"||c==="x"||c==="f";
 const M=1.5;
 
 /* ================= STATO ================= */
@@ -459,6 +575,13 @@ function cellBase(g,x,y,s){
   if(FLOOR(ch(g,x,y+1))||"~wxhcbk".includes(ch(g,x,y+1))){ctx.fillStyle="rgba(200,170,120,.28)";ctx.fillRect(X,Y+s-3,s,3)}
   if(c==="T"){const gr=ctx.createRadialGradient(X+s/2,Y+s*.7,1,X+s/2,Y+s*.7,s*1.6);gr.addColorStop(0,"rgba(255,190,90,.55)");gr.addColorStop(1,"rgba(255,190,90,0)");ctx.fillStyle=gr;ctx.fillRect(X-s,Y-s,s*3,s*3);ctx.fillStyle="#ffcf6e";ctx.beginPath();ctx.arc(X+s/2,Y+s*.65,s*.12,0,7);ctx.fill()}
   return}
+ if(c==="v"){ctx.fillStyle=`hsl(220,18%,${3+r1*3}%)`;ctx.fillRect(X,Y,s+.5,s+.5);ctx.strokeStyle="rgba(210,180,130,.45)";ctx.lineWidth=Math.max(2,s*.08);[[0,-1,X,Y,X+s,Y],[0,1,X,Y+s,X+s,Y+s],[-1,0,X,Y,X,Y+s],[1,0,X+s,Y,X+s,Y+s]].forEach(([dx,dy,a,b,c2,d])=>{const n=ch(g,x+dx,y+dy);if(n!=="v"&&n!=="#"&&n!=="T"){ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c2,d);ctx.stroke()}});if(r2>.85){ctx.fillStyle="rgba(255,230,160,.08)";ctx.beginPath();ctx.arc(X+s*r1,Y+s*r2,s*.3,0,7);ctx.fill()}return}
+ if(c==="q"||c==="f"||c==="A"){ctx.fillStyle=`hsl(${90+r1*12},${28+r2*10}%,${c==="A"?22:30+r2*6}%)`;ctx.fillRect(X,Y,s+.5,s+.5);
+  if(c==="f"){ctx.strokeStyle="rgba(150,200,90,.75)";ctx.lineWidth=Math.max(1.5,s*.05);for(let k=0;k<3;k++){const bx=X+s*(.2+rnd(x,y,k+80)*.6),by=Y+s*(.75+rnd(x,y,k+90)*.15);ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx-s*.12,by-s*.3,bx-s*.2,by-s*.5);ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+s*.12,by-s*.3,bx+s*.2,by-s*.5);ctx.stroke()}}
+  if(c==="q"&&r1>.7){ctx.fillStyle="rgba(200,230,150,.35)";ctx.fillRect(X+s*r2*.8,Y+s*r1*.6,s*.08,s*.2)}
+  if(c==="A"){ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.arc(X+s*.55,Y+s*.58,s*.5,0,7);ctx.fill();ctx.fillStyle=`hsl(${105+r2*20},${30+r1*15}%,${18+r1*8}%)`;ctx.beginPath();ctx.arc(X+s/2,Y+s/2,s*.48,0,7);ctx.fill();ctx.fillStyle="rgba(180,220,120,.18)";ctx.beginPath();ctx.arc(X+s*.38,Y+s*.36,s*.2,0,7);ctx.fill()}
+  return}
+ if(c==="N"){ctx.fillStyle=`hsl(185,30%,${20+r2*4}%)`;if(ch(g,x,y+1)===","||ch(g,x-1,y)===",")ctx.fillStyle="hsl(30,15%,26%)";ctx.fillRect(X,Y,s+.5,s+.5);const gr=ctx.createRadialGradient(X+s/2,Y+s/2,1,X+s/2,Y+s/2,s*1.4);gr.addColorStop(0,"rgba(90,255,150,.55)");gr.addColorStop(1,"rgba(90,255,150,0)");ctx.fillStyle=gr;ctx.fillRect(X-s,Y-s,s*3,s*3);ctx.fillStyle="#2fd07a";ctx.beginPath();ctx.moveTo(X+s/2,Y+s*.06);ctx.lineTo(X+s*.86,Y+s/2);ctx.lineTo(X+s/2,Y+s*.94);ctx.lineTo(X+s*.14,Y+s/2);ctx.closePath();ctx.fill();ctx.strokeStyle="#0b5a32";ctx.lineWidth=Math.max(1.5,s*.05);ctx.stroke();ctx.fillStyle="rgba(220,255,230,.6)";ctx.beginPath();ctx.moveTo(X+s/2,Y+s*.12);ctx.lineTo(X+s*.62,Y+s*.42);ctx.lineTo(X+s/2,Y+s*.5);ctx.closePath();ctx.fill();return}
  if(c==="w"){ctx.fillStyle=`hsl(185,${28+r1*8}%,${22+r2*4}%)`;ctx.fillRect(X,Y,s+.5,s+.5);ctx.strokeStyle="rgba(170,230,220,.25)";ctx.lineWidth=Math.max(1,s*.04);ctx.beginPath();const yy=Y+s*(.35+r1*.3);ctx.moveTo(X+s*.1,yy);ctx.quadraticCurveTo(X+s*.3,yy-s*.12,X+s*.5,yy);ctx.quadraticCurveTo(X+s*.7,yy+s*.12,X+s*.9,yy);ctx.stroke();return}
  if(c==="g"){ctx.fillStyle=`hsl(30,${25+r1*8}%,${26+r2*5}%)`;ctx.fillRect(X,Y,s+.5,s+.5);ctx.strokeStyle="rgba(0,0,0,.35)";ctx.lineWidth=Math.max(1,s*.05);ctx.beginPath();ctx.moveTo(X,Y+s*(.3+r1*.3));ctx.quadraticCurveTo(X+s/2,Y+s*(.5+r2*.3),X+s,Y+s*(.3+r2*.3));ctx.stroke();return}
  if(c==="M"){ctx.fillStyle=`hsl(24,${45+r1*15}%,${30+r2*10}%)`;ctx.fillRect(X,Y,s+.5,s+.5);ctx.strokeStyle="rgba(255,200,140,.25)";ctx.lineWidth=Math.max(1,s*.08);ctx.beginPath();if(r1>.5){ctx.moveTo(X,Y+s*.5);ctx.lineTo(X+s,Y+s*.5)}else{ctx.moveTo(X+s*.5,Y);ctx.lineTo(X+s*.5,Y+s)}ctx.stroke();if(r2>.7){ctx.fillStyle="rgba(120,255,120,.55)";ctx.beginPath();ctx.arc(X+s*(.3+r1*.4),Y+s*(.3+r2*.3),s*.12,0,7);ctx.fill()}else if(r2<.2){ctx.fillStyle="rgba(230,190,90,.7)";ctx.beginPath();ctx.arc(X+s/2,Y+s/2,s*.22,Math.PI,0);ctx.fill()}return}
@@ -600,7 +723,7 @@ function renderSide(){
  <div style="display:flex;flex-direction:column;gap:6px">${S.tokens.filter(t=>!t.reserve).map(t=>`<div class="tok ${t.id===SEL?"sel":""} ${t.id===S.turn?"cur":""}" data-id="${t.id}"><span class="dot" style="background:${t.color};opacity:${t.hidden?.45:1}"></span><b>${esc(t.name)}</b><small>${t.down?"a terra":t.hidden?(t.kind==="enemy"?"invisibile ai giocatori":"nascosto"):t.owner?esc(t.owner):""}</small></div>`).join("")}</div>
  <div class="row"><input id="mNewName" placeholder="Nuovo nemico" style="flex:1;min-width:120px"><input id="mNewN" type="number" min="1" value="1" aria-label="Quantità"><button id="mAdd">+ In riserva</button></div>
  <h3>Legenda</h3>
- <div class="legend"><i style="background:#2a2420"></i><span>Muro (con un punto giallo: torcia)</span><i style="background:#2f5a5c"></i><span>Acqua del canale: terreno difficile</span><i style="background:#5f6236"></i><span>Fango e macerie: terreno difficile</span><i style="background:#7a5530"></i><span>Carretto, barili, casse: bloccano il passo, non la vista</span><i style="background:#8e97a3"></i><span>Sporgenza rialzata (bordo scuro)</span><i style="background:#6b4424"></i><span>Porta, cancello o gabbia (si aprono con «Apri/chiudi porte»)</span><i style="background:repeating-linear-gradient(90deg,#3b3f44 0 3px,#a89c88 3px 6px)"></i><span>Sbarre: bloccano il passo, non la vista</span><i style="background:#5e4630"></i><span>Gabbia coperta da un telo</span><i style="background:#8a5a2e"></i><span>Macchina o palco: bloccano passo e vista</span><i style="background:#3c285a"></i><span>Etichetta viola: la vedi solo tu</span>${S.exits&&S.exits.length?'<i style="background:#000;border-color:#ffcf6e;border-radius:50%"></i><span>Punto di fuga numerato (tratteggiato: ancora nascosto ai giocatori)</span>':""}</div>${S.light!=="luce"?'<div class="note">Mappa al buio: ognuno vede fino alla sua scurovisione; con la torcia accesa almeno 6 m.</div>':""}
+ <div class="legend"><i style="background:#2a2420"></i><span>Muro (con un punto giallo: torcia)</span><i style="background:#2f5a5c"></i><span>Acqua del canale: terreno difficile</span><i style="background:#5f6236"></i><span>Fango e macerie: terreno difficile</span><i style="background:#7a5530"></i><span>Carretto, barili, casse: bloccano il passo, non la vista</span><i style="background:#8e97a3"></i><span>Sporgenza rialzata (bordo scuro)</span><i style="background:#6b4424"></i><span>Porta, cancello o gabbia (si aprono con «Apri/chiudi porte»)</span><i style="background:repeating-linear-gradient(90deg,#3b3f44 0 3px,#a89c88 3px 6px)"></i><span>Sbarre: bloccano il passo, non la vista</span><i style="background:#5e4630"></i><span>Gabbia coperta da un telo</span><i style="background:#8a5a2e"></i><span>Macchina o palco: bloccano passo e vista</span><i style="background:#3c285a"></i><span>Etichetta viola: la vedi solo tu</span>${S.grid.some(r=>r.includes("A"))?'<i style="background:#24401f;border-radius:50%"></i><span>Albero: blocca passo e vista</span>':""}${S.grid.some(r=>r.includes("f"))?'<i style="background:#4d6a2c"></i><span>Sottobosco e felci: terreno difficile</span>':""}${S.grid.some(r=>r.includes("q"))?'<i style="background:#4f7a3a"></i><span>Erba</span>':""}${S.grid.some(r=>r.includes("v"))?'<i style="background:#06080c;border-color:#d2b482"></i><span>Voragine: chi cade subisce 10d6; solo i volanti la attraversano</span>':""}${S.grid.some(r=>r.includes("N"))?'<i style="background:#2fd07a"></i><span>Nucleo di Smeraldo: blocca passo e vista</span>':""}${S.exits&&S.exits.length?'<i style="background:#000;border-color:#ffcf6e;border-radius:50%"></i><span>Punto di fuga numerato (tratteggiato: ancora nascosto ai giocatori)</span>':""}</div>${S.light!=="luce"?'<div class="note">Mappa al buio: ognuno vede fino alla sua scurovisione; con la torcia accesa almeno 6 m.</div>':""}
  <div class="note">${esc(MAPS[S.mapId]?.note||"")}</div>
  <div class="row"><button class="dng" id="mEnd">Chiudi la battaglia</button></div>`;
  const on=(id,f)=>{const el=sd.querySelector("#"+id);if(el)el.onclick=f};
