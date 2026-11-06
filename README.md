@@ -32,6 +32,12 @@ Nel menu «Mappa» della preparazione le mappe sono raggruppate per one-shot. I 
 - `nucleo` Atto 3 · Il Nucleo di Smeraldo (lago, Virydrax in riserva)
 - `rovine` Atto 3 · Le rovine (variante se il dungeon esplode)
 
+### Il Risveglio di Kem
+
+- `campo` Scena 3 · L'assalto al campo (deserto di notte, sabbia, fuoco)
+- `custodi` Scena 4 · La Sala dei Custodi (buia, sabbia e cornicioni)
+- `sepolcreto` Scena 5 · L'imboscata nel sepolcreto (buia, sarcofagi, breccia)
+
 ### Altre mappe
 
 - `vuota` Stanza vuota 20×14
@@ -41,3 +47,7 @@ Ogni mappa può definire `spawns` (posizioni di partenza per ruolo, in base al n
 ## Caselle per esterni e voragini
 
 Aggiunte per l'Esame, non cambiano le mappe precedenti: `q` erba, `f` sottobosco (terreno difficile), `A` albero (blocca passo e vista), `v` voragine (blocca il passo a PG e alleati; i nemici, che lì sono tutti volanti, possono sorvolarla), `N` gemma del Nucleo (blocca passo e vista).
+
+## Caselle del deserto e delle tombe
+
+Aggiunte per il Risveglio di Kem: `s` sabbia (terreno difficile), `Z` sarcofago (blocca il passo, non la vista), `F` fuoco da campo (blocca il passo, non la vista).
