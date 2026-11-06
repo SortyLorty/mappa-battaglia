@@ -97,7 +97,9 @@ canvas{display:block;width:100%;height:100%}
   <div class="box">
     <div class="card">
       <h2 id="setupTitle">Prepara la battaglia</h2>
-      <label class="note" for="setMap">Mappa</label>
+      <label class="note" for="setShot">One-shot</label>
+      <select id="setShot"></select>
+      <label class="note" for="setMap">Battaglia</label>
       <select id="setMap"></select>
       <div class="note" id="setMapNote"></div>
     </div>
@@ -843,11 +845,15 @@ let SETUP=null;
 function openSetup(cfg){
  SETUP={combat:!!(cfg.enemies&&cfg.enemies.length),map:cfg.map&&MAPS[cfg.map]?cfg.map:"n6",title:cfg.title||"",pcs:(cfg.pcs||[]).map(p=>({...p})),enemies:cfg.enemies||[]};
  show("#scrSetup");$("#setupTitle").textContent=cfg.title?"Prepara: "+cfg.title:"Prepara la battaglia";
- {const opt=(k,nm)=>`<option value="${k}" ${k===SETUP.map?"selected":""}>${esc(nm)}</option>`;const used=new Set();const groups=ONESHOTS.map(g=>({name:g.name,items:g.maps.filter(k=>MAPS[k]).map(k=>{used.add(k);return opt(k,g.strip&&MAPS[k].name.startsWith(g.strip)?MAPS[k].name.slice(g.strip.length):MAPS[k].name)})}));
-  const rest=Object.keys(MAPS).filter(k=>!used.has(k)).map(k=>opt(k,MAPS[k].name));if(rest.length){const o=groups.find(g=>g.name==="Altre mappe");if(o)o.items.push(...rest);else groups.push({name:"Altre mappe",items:rest})}
-  $("#setMap").innerHTML=groups.filter(g=>g.items.length).map(g=>`<optgroup label="${esc(g.name)}">${g.items.join("")}</optgroup>`).join("")}
+ {const used=new Set();const groups=ONESHOTS.map(g=>({name:g.name,items:g.maps.filter(k=>MAPS[k]).map(k=>{used.add(k);return{k,nm:g.strip&&MAPS[k].name.startsWith(g.strip)?MAPS[k].name.slice(g.strip.length):MAPS[k].name}})}));
+  const rest=Object.keys(MAPS).filter(k=>!used.has(k)).map(k=>({k,nm:MAPS[k].name}));if(rest.length){const o=groups.find(g=>g.name==="Altre mappe");if(o)o.items.push(...rest);else groups.push({name:"Altre mappe",items:rest})}
+  SETUP.groups=groups.filter(g=>g.items.length);let gi=SETUP.groups.findIndex(g=>g.items.some(it=>it.k===SETUP.map));if(gi<0)gi=0;SETUP.shot=gi;
+  $("#setShot").innerHTML=SETUP.groups.map((g,i)=>`<option value="${i}" ${i===gi?"selected":""}>${esc(g.name)}</option>`).join("");
+  fillMaps()}
+ $("#setShot").onchange=()=>{SETUP.shot=+$("#setShot").value;SETUP.map=SETUP.groups[SETUP.shot].items[0].k;fillMaps();renderSetup()};
  $("#setMap").onchange=()=>{SETUP.map=$("#setMap").value;renderSetup()};renderSetup();
 }
+function fillMaps(){const g=SETUP.groups[SETUP.shot];if(!g.items.some(it=>it.k===SETUP.map))SETUP.map=g.items[0].k;$("#setMap").innerHTML=g.items.map(it=>`<option value="${it.k}" ${it.k===SETUP.map?"selected":""}>${esc(it.nm)}</option>`).join("")}
 function renderSetup(){
  $("#setMapNote").textContent=MAPS[SETUP.map].note||"";
  $("#setPcs").innerHTML=(SETUP.pcs.length?"":'<p class="note">Nessun personaggio preparato: i giocatori se lo creano quando entrano dal telefono.</p>')+SETUP.pcs.map((p,i)=>`<div class="pcrow"><input type="color" value="${p.color}" data-i="${i}" data-f="color" aria-label="Colore"><input value="${esc(p.name)}" data-i="${i}" data-f="name" aria-label="Nome"><input type="number" step="1.5" value="${p.speed}" data-i="${i}" data-f="speed" aria-label="Velocità"><input type="number" step="3" value="${p.dv}" data-i="${i}" data-f="dv" aria-label="Scurovisione"><button data-del="${i}" aria-label="Togli">✕</button></div>`).join("");

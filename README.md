@@ -12,7 +12,7 @@ Le caselle `X` sono buchi nel muro. Solo i nemici possono entrarci: chi ci arriv
 
 ## Mappe incluse, divise per one-shot
 
-Nel menu «Mappa» della preparazione le mappe sono raggruppate per one-shot. I gruppi sono nell'elenco `ONESHOTS`, subito dopo `MAPS`: per una one-shot nuova basta aggiungere un gruppo con gli id delle sue mappe. Le mappe che non stanno in nessun gruppo finiscono in «Altre mappe».
+Nella preparazione si sceglie prima la one-shot, poi la battaglia: i due menu leggono i gruppi. I gruppi sono nell'elenco `ONESHOTS`, subito dopo `MAPS`: per una one-shot nuova basta aggiungere un gruppo con gli id delle sue mappe. Le mappe che non stanno in nessun gruppo finiscono in «Altre mappe».
 
 ### Il Grande e Glorioso Me
 
