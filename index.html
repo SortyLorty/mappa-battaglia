@@ -563,6 +563,7 @@ function startMaster(st){
   PEER.on("disconnected",()=>{setNet("Riconnessione…");setTimeout(()=>{try{PEER.reconnect()}catch(x){}},2000)});
   PEER.on("connection",conn=>{CONNS.set(conn,{role:"player",id:null});conn.on("data",m=>onMasterMsg(conn,m));conn.on("close",()=>{CONNS.delete(conn);renderSide()});conn.on("open",()=>conn.send({t:"lobby",s:publicStateFor("player")}))})};
  open();
+ if(!startMaster.vis){startMaster.vis=true;setInterval(()=>{CONNS.forEach((v,c)=>{try{if(c.open)c.send({t:"ping"})}catch(x){}})},5000);document.addEventListener("visibilitychange",()=>{if(document.hidden||ROLE!=="master"||!PEER)return;if(PEER.destroyed)open();else if(PEER.disconnected){setNet("Riconnessione…");try{PEER.reconnect()}catch(x){}}})}
 }
 function onMasterMsg(conn,m){
  const c=CONNS.get(conn);if(!c||!m)return;
@@ -591,12 +592,16 @@ function startClient(room,asTable){
  if(asTable){setupStage();renderSide();renderBar()}
  if(typeof Peer==="undefined"){setNet(asTable?"Offline: vista tavolo locale":"Serve internet per entrare dal telefono");return}
  setNet("Collegamento…");
- const connect=()=>{PEER=new Peer({debug:1});
+ let wasIn=false; // già entrato una volta: se il master sparisce per poco (iPad in un'altra scheda), continua a riprovare
+ let gen=0,last=Date.now(); // gen: solo l'ultimo tentativo conta; last: ultimo messaggio dal master (che manda un segnale ogni 5 s)
+ const retry=ms=>{const g=gen;setTimeout(()=>{if(g!==gen)return;try{PEER.destroy()}catch(x){}connect()},ms)};
+ setInterval(()=>{if(wasIn&&Date.now()-last>15000){last=Date.now();setNet("Collegamento perso, riprovo…");retry(0)}},3000);
+ const connect=()=>{const g=++gen;last=Date.now();PEER=new Peer({debug:1});
   PEER.on("open",()=>{CONN=PEER.connect(PEER_PREFIX+room,{reliable:true});
-   CONN.on("open",()=>{setNet("Collegato");if(asTable)CONN.send({t:"table"});else if(saved){CONN.send(saved.id?{t:"claim",id:saved.id,name:saved.name}:{t:"new",pc:saved.pc})}});
-   CONN.on("data",m=>{if(!m)return;if(m.t==="lobby"){S=m.s;if(!asTable)renderJoin()}else if(m.t==="state")onState(m.s,m.you);else if(m.t==="err")toast(m.msg)});
-   CONN.on("close",()=>{setNet("Collegamento perso, riprovo…");setTimeout(connect,3000)})});
-  PEER.on("error",e=>{if(e.type==="peer-unavailable")setNet("Stanza non trovata: controlla il codice o chiedi al master se è aperta");else setNet("Errore di rete: "+e.type);if(e.type!=="peer-unavailable")setTimeout(()=>{try{PEER.destroy()}catch(x){}connect()},4000)})};
+   CONN.on("open",()=>{if(g!==gen)return;wasIn=true;last=Date.now();setNet("Collegato");const sv=ls.get("mb-player-"+room,null)||saved;if(asTable)CONN.send({t:"table"});else if(sv){CONN.send(sv.id?{t:"claim",id:sv.id,name:sv.name}:{t:"new",pc:sv.pc})}});
+   CONN.on("data",m=>{if(!m||g!==gen)return;last=Date.now();if(m.t==="ping")return;if(m.t==="lobby"){S=m.s;if(!asTable)renderJoin()}else if(m.t==="state")onState(m.s,m.you);else if(m.t==="err")toast(m.msg)});
+   CONN.on("close",()=>{if(g!==gen)return;setNet("Collegamento perso, riprovo…");retry(3000)})});
+  PEER.on("error",e=>{if(g!==gen)return;if(e.type==="peer-unavailable"){if(wasIn){setNet("Il master è un attimo fuori, riprovo…");retry(4000)}else setNet("Stanza non trovata: controlla il codice o chiedi al master se è aperta")}else{setNet("Errore di rete: "+e.type);retry(4000)}})};
  connect();
 }
 function send(m){if(CONN&&CONN.open)CONN.send(m);else toast("Non collegato al master")}
