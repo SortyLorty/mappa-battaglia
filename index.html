@@ -73,6 +73,7 @@ canvas{display:block;width:100%;height:100%}
   <span class="code" id="roomCode" hidden></span>
   <span class="st" id="netStatus"></span>
   <span class="sp"></span>
+  <button id="qrTop" hidden>QR per entrare</button>
   <button id="sideToggle" hidden>Pannello</button>
 </div>
 
@@ -589,7 +590,7 @@ function startClient(room,asTable){
  const saved=ls.get("mb-player-"+room,null);
  const onState=(s,you)=>{S=s;if(PREVIEW&&!tok(PREVIEW.id))PREVIEW=null;if(you)ME=you;if(ROLE==="player"&&ME&&$("#scrJoin").hidden===false)enterMap();if(!$("#scrMap").hidden){$("#title").textContent=S.title;draw();renderBar();renderSide()}if(ROLE==="player"&&!ME)renderJoin()};
  try{BC=new BroadcastChannel(PEER_PREFIX+room);BC.onmessage=e=>{if(asTable&&e.data&&e.data.t==="state")onState(e.data.s)};if(asTable)BC.postMessage({t:"hello"})}catch(e){}
- if(asTable){setupStage();renderSide();renderBar()}
+ if(asTable){setupStage();renderSide();renderBar();$("#qrTop").hidden=false}
  if(typeof Peer==="undefined"){setNet(asTable?"Offline: vista tavolo locale":"Serve internet per entrare dal telefono");return}
  setNet("Collegamento…");
  let wasIn=false; // già entrato una volta: se il master sparisce per poco (iPad in un'altra scheda), continua a riprovare
@@ -841,9 +842,11 @@ const me=tok(ME);if(!me){b.innerHTML='<div class="info">In attesa…</div>';retu
 $("#sideToggle").onclick=()=>$("#side").classList.toggle("closed");
 
 /* ================= QR ================= */
-function joinUrl(){return location.origin+location.pathname+"?r="+encodeURIComponent(S.room)}
-function showQr(){const m=$("#qrModal");m.hidden=false;$("#qr").innerHTML="";$("#qrCode").textContent=S.room;$("#qrUrl").textContent=joinUrl();if(typeof QRCode!=="undefined")new QRCode($("#qr"),{text:joinUrl(),width:220,height:220});else $("#qr").innerHTML='<p style="color:#000">QR non disponibile offline: usa il codice.</p>'}
+function curRoom(){return (S&&S.room)||$("#roomCode").textContent}
+function joinUrl(){return location.origin+location.pathname+"?r="+encodeURIComponent(curRoom())}
+function showQr(){const m=$("#qrModal");m.hidden=false;$("#qr").innerHTML="";$("#qrCode").textContent=curRoom();$("#qrUrl").textContent=joinUrl();if(typeof QRCode!=="undefined"){const q=ROLE==="table"?Math.min(320,Math.floor(Math.min(innerWidth,innerHeight)*.6)):220;new QRCode($("#qr"),{text:joinUrl(),width:q,height:q})}else $("#qr").innerHTML='<p style="color:#000">QR non disponibile offline: usa il codice.</p>'}
 $("#qrClose").onclick=()=>$("#qrModal").hidden=true;
+$("#qrTop").onclick=showQr;
 
 /* ================= SETUP MASTER ================= */
 let SETUP=null;

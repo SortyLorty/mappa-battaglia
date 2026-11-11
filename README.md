@@ -5,6 +5,8 @@ Mappa tattica per le one-shot della Gilda di Boar Tail: il master apre la battag
 - `index.html`: tutta l'applicazione, nessuna dipendenza da installare.
 - Le mappe sono nell'oggetto `MAPS` in cima allo script.
 - I telefoni si collegano direttamente al dispositivo del master (WebRTC, tramite il servizio pubblico PeerJS): serve internet. Master e vista tavolo locale funzionano anche offline.
+- La vista tavolo ha in alto il pulsante «QR per entrare»: i giocatori inquadrano il QR dal tavolo, senza guardare lo schermo del master.
+- Se il master sparisce per un po' (per esempio l'iPad passa a un'altra scheda o app), telefoni e vista tavolo se ne accorgono entro 15 secondi e si ricollegano da soli quando torna.
 
 ## Punti di fuga (nodo 3)
 
